@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>酒さ・初級スタッフ研修クイズ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .correct-btn { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong-btn { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .neutral-btn { background-color: #f8fafc !important; border-color: #e2e8f0 !important; color: #64748b !important; }
+        .glossary-term { color: #4f46e5; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .glossary-term:hover { color: #3730a3; background-color: #eef2ff; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+    <div id="app" class="max-w-2xl mx-auto px-4 py-8">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <div class="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4">酒さ（赤ら顔）のきほん<br>初級スタッフ研修クイズ</h1>
+            <p class="text-slate-600 mb-8 leading-relaxed text-sm">
+                最新ガイドラインに基づいた基礎知識を学びましょう。<br>
+                青い言葉をタップすると意味が表示されます！
+            </p>
+            <button onclick="quiz.start()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-12 rounded-full transition-all shadow-md">
+                テストを開始する
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <button id="global-prev-btn" onclick="quiz.prev()" class="text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 invisible">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    前へ
+                </button>
+                <span id="progress-text" class="text-sm font-medium text-slate-500">Question 1 / 20</span>
+                <div class="w-1/2 bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="question-container" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in mb-6">
+                <h2 id="question-text" class="text-lg font-bold mb-6 leading-relaxed text-slate-800">問題文</h2>
+                <div id="options" class="space-y-3">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+
+            <!-- Detailed Explanation Area -->
+            <div id="explanation-box" class="hidden p-6 rounded-2xl mb-6 fade-in border bg-white shadow-sm border-indigo-100">
+                <div id="feedback-header" class="flex items-center gap-2 mb-2 font-bold">
+                    <span id="status-icon"></span>
+                    <span id="status-text"></span>
+                </div>
+                <div id="rationale-text" class="text-slate-700 text-sm leading-relaxed mb-4"></div>
+                <p class="text-[10px] text-slate-400 mb-4 font-medium italic">※他の選択肢ボタンをタップすると、その解説も確認できます。</p>
+                
+                <div class="flex gap-3">
+                    <button id="next-btn" onclick="quiz.next()" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition-colors hidden shadow-lg shadow-indigo-100">
+                        次の問題へ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-bold mb-4 text-slate-800">お疲れ様でした！</h2>
+            <div class="text-6xl font-black text-indigo-600 mb-4"><span id="score-display">0</span> / 20</div>
+            <p id="result-message" class="text-slate-600 mb-8 leading-relaxed"></p>
+            <button onclick="location.reload()" class="bg-slate-800 text-white py-3 px-10 rounded-full font-bold">
+                もう一度最初から挑戦する
+            </button>
+        </div>
+    </div>
+
+    <!-- 用語解説モーダル -->
+    <div id="glossary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl fade-in overflow-y-auto max-h-[90vh]">
+            <h3 id="glossary-title" class="text-lg font-bold text-indigo-700 mb-3 border-b pb-2">用語解説</h3>
+            <p id="glossary-body" class="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap"></p>
+            <button onclick="closeGlossary()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 rounded-xl transition-colors">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const glossary = {
+            "酒さ": "（しゅさ）主に30代以降の男女に多く見られる、顔の赤みが続く病気です。原因はまだはっきりしていませんが、血管が広がりやすくなっていたり、炎症が起きやすくなっている状態です。",
+            "紅斑": "（こうはん）皮膚の表面が赤くなった状態です。酒さでは顔の中心部が持続的に赤くなるのが特徴です。",
+            "毛細血管拡張": "皮膚の表面に近い細い血管が広がって、糸くずのように赤く透けて見えるようになった状態です。鼻の周りや頬によく見られます。",
+            "丘疹": "（きゅうしん）皮膚にできる小さな「ぶつぶつ」のことです。ニキビのように赤く盛り上がることがあります。",
+            "膿疱": "（のうほう）丘疹の先端に「うみ」が溜まって黄色く見えている状態です。",
+            "面皰": "（めんぽう）いわゆる「コメド」や「芯」のこと。毛穴が詰まって白や黒に見える、ニキビ特有の症状です。酒さにはこれがないことが大きな特徴です。",
+            "メトロニダゾール": "炎症やバイ菌を抑える成分で、酒さの治療において「最も推奨される」塗り薬です。副作用が少なく、長期間使いやすいお薬です。",
+            "増悪因子": "（ぞうあくいんし）病気の症状を悪化させてしまう原因やきっかけのことです。酒さでは紫外線やアルコールなどが代表的です。",
+            "ステロイド酒さ": "ステロイド薬（湿疹のお薬）を顔に長期間塗り続けたことで、逆に皮膚が薄くなり、血管が広がって酒さのような症状が出てしまう状態です。",
+            "バリア機能": "皮膚の表面が外からの刺激を防ぎ、体の中の水分を守る役割のことです。酒さの方はこの力が弱く、刺激に敏感になっています。",
+            "鼻瘤": "（びりゅう）鼻の頭の皮膚が厚く硬くなり、ゴツゴツと盛り上がってコブのようになった状態です。お酒飲みの鼻のように見えることもあります。",
+            "QOL": "「生活の質」のこと。顔が赤くなることで人の目が気になったり、自分に自信が持てなくなったりするため、心のケアも大切です。",
+            "ノンコメドジェニック": "試験を行って、毛穴の詰まり（コメド）を起こしにくいことが確認されている化粧品のことです。",
+            "低刺激性": "お肌への刺激となる成分をできるだけ少なくした製品のこと。敏感なお肌の方に適しています。"
+        };
+
+        const quizData = [
+            {
+                q: "酒さ（しゅさ）は体のどの部分に最も多く症状が現れますか？",
+                options: [
+                    { text: "手足 の指先", isCorrect: false, rationale: "間違いです。酒さは主に顔面に現れるのが特徴です。" },
+                    { text: "顔面（頬、鼻、額、顎）", isCorrect: true, rationale: "正解です。顔の中心部である頬や鼻などが赤くなるのが典型的な症状です。" },
+                    { text: "背中 や お腹", isCorrect: false, rationale: "間違いです。" },
+                    { text: "頭皮 だけ", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "酒さと「ニキビ（尋常性痤瘡）」を見分けるための、最も大きな違いは何ですか？",
+                options: [
+                    { text: "痛みが全くないこと", isCorrect: false, rationale: "どちらも痛みを伴うことがあります。" },
+                    { text: "「面皰（コメド・芯）」がないこと", isCorrect: true, rationale: "正解です。ニキビには芯（面皰）がありますが、酒さには芯がないのが診断の決め手になります。" },
+                    { text: "皮膚が乾燥していること", isCorrect: false, rationale: "どちらの病気でも乾燥することはあります。" },
+                    { text: "10 代の人しかならないこと", isCorrect: false, rationale: "酒さは主に30代以降の中高年に多い病気です。" }
+                ]
+            },
+            {
+                q: "酒さの症状を悪化させてしまう「きっかけ（増悪因子）」として、代表的なものはどれですか？",
+                options: [
+                    { text: "日光（紫外線）、アルコール、激しい温度変化", isCorrect: true, rationale: "正解です。血管を広げてしまう刺激が、赤みや火照りを悪化させます。" },
+                    { text: "野菜の食べすぎ、早寝早起き", isCorrect: false, rationale: "これらはむしろ健康的な習慣であり、悪化因子ではありません。" },
+                    { text: "水を 1 日 1 リットル飲むこと", isCorrect: false, rationale: "水分補給自体は問題ありません。" },
+                    { text: "暗い部屋で過ごすこと", isCorrect: false, rationale: "間違いです。光を避けることはむしろ推奨されます。" }
+                ]
+            },
+            {
+                q: "酒さの治療において、現在ガイドラインで「最も強く推奨（A）」されている塗り薬は何ですか？",
+                options: [
+                    { text: "殺菌用の アルコール 液", isCorrect: false, rationale: "アルコールは刺激が強く、酒さを悪化させるため不適切です。" },
+                    { text: "メトロニダゾール ゲル", isCorrect: true, rationale: "正解です。2023年のガイドラインで、ぶつぶつのある酒さに対して最も推奨されるお薬となりました。" },
+                    { text: "ワセリン のみの厚塗り", isCorrect: false, rationale: "保湿は大事ですが、炎症を抑える標準治療薬ではありません。" },
+                    { text: "強力な ステロイド 軟膏", isCorrect: false, rationale: "ステロイドは一時的に赤みを引かせますが、長期的には「ステロイド酒さ」を招くため推奨されません。" }
+                ]
+            },
+            {
+                q: "酒さの病型（タイプ）の中で、鼻の皮膚がコブのように盛り上がってしまうものを何と呼びますか？",
+                options: [
+                    { text: "紅斑毛細血管拡張型", isCorrect: false, rationale: "これは「赤みと血管の透け」がメインのタイプです。" },
+                    { text: "丘疹膿疱型", isCorrect: false, rationale: "これは「ぶつぶつ」ができるタイプです。" },
+                    { text: "瘤腫型（りゅうしゅがた）／鼻瘤", isCorrect: true, rationale: "正解です。鼻の組織が厚くなり、ボコボコと変形してしまう重症なタイプです。" },
+                    { text: "眼型", isCorrect: false, rationale: "目に症状が出るタイプです。" }
+                ]
+            },
+            {
+                q: "顔を洗う（洗顔）際、酒さの患者さんに勧めるべき「お湯の温度」として正しいのはどれですか？",
+                options: [
+                    { text: "15 ℃ 以下の氷水", isCorrect: false, rationale: "冷たすぎると刺激になり、その後の反動で赤くなることがあります。" },
+                    { text: "38 〜 40 ℃ のぬるま湯", isCorrect: true, rationale: "正解です。血管を刺激しない「微温湯」で、優しく洗うのが基本です。" },
+                    { text: "42 〜 45 ℃ の熱いお湯", isCorrect: false, rationale: "熱いお湯は血管を広げ、酒さを確実に悪化させるので厳禁です。" },
+                    { text: "何度でも良い", isCorrect: false, rationale: "温度管理は酒さのスキンケアで非常に大切です。" }
+                ]
+            },
+            {
+                q: "酒さの患者さんの「洗顔方法」として、正しいアドバイスはどれですか？",
+                options: [
+                    { text: "汚れが落ちるよう、ナイロンタオルで擦る", isCorrect: false, rationale: "物理的な刺激は炎症をひどくするので厳禁です。" },
+                    { text: "石鹸をよく泡立てて、泡を転がすように素手で洗う", isCorrect: true, rationale: "正解です。とにかく摩擦を避けることが、バリア機能の回復に繋がります。" },
+                    { text: "洗顔料は使わず、1 日 10 回お湯で流す", isCorrect: false, rationale: "洗いすぎは乾燥を招き、逆効果です。" },
+                    { text: "洗顔した後は、タオルで叩くように強く拭く", isCorrect: false, rationale: "拭くときも優しく押さえるように水分を吸い取ります。" }
+                ]
+            },
+            {
+                q: "酒さの症状の一つ「火照り（ほてり）」が辛いとき、自宅でできる一時的な対処法は何ですか？",
+                options: [
+                    { text: "熱い蒸しタオルを当てる", isCorrect: false, rationale: "温めるのは逆効果です。" },
+                    { text: "保冷剤をタオルで包み、数分間軽く冷やす", isCorrect: true, rationale: "正解です。冷やすことで血管が一時的に縮まり、熱感や不快感が和らぎます。" },
+                    { text: "赤みが消えるまで頬を叩く", isCorrect: false, rationale: "物理的な刺激は絶対に避けてください。" },
+                    { text: "冷たい風を 1 時間当て続ける", isCorrect: false, rationale: "乾燥しすぎてしまうため、適度な冷却が望ましいです。" }
+                ]
+            },
+            {
+                q: "外出する際、酒さの患者さんが最も気をつけるべきことは何ですか？",
+                options: [
+                    { text: "できるだけ速く歩くこと", isCorrect: false, rationale: "間違いです。" },
+                    { text: "帽子や日傘、日焼け止めで「紫外線」を避けること", isCorrect: true, rationale: "正解です。日光は酒さを悪化させる最大の要因の一つなので、徹底した遮光が必要です。" },
+                    { text: "人とおしゃべりをしないこと", isCorrect: false, rationale: "間違いです。" },
+                    { text: "マスクを 2 枚重ねにして密閉すること", isCorrect: false, rationale: "蒸れや摩擦が刺激になることもあるため、遮光優先です。" }
+                ]
+            },
+            {
+                q: "飲み物や食べ物のアドバイスとして、酒さの患者さんに控えてもらうべき組み合わせは？",
+                options: [
+                    { text: "冷たいお茶 と 豆腐", isCorrect: false, rationale: "これらは問題ありません。" },
+                    { text: "アルコール、辛いスパイス、極端に熱い食べ物", isCorrect: true, rationale: "正解です。これらは血行を急激に良くし、顔を赤くさせる刺激物であるため、回避が推奨されます。" },
+                    { text: "白米 と お味噌汁", isCorrect: false, rationale: "標準的な食事は問題ありません。" },
+                    { text: "ビタミン剤 と サプリメント", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "「ステロイド薬（湿疹の薬）」を顔に塗り続けたあとに酒さのような症状が出ることを何と呼びますか？",
+                options: [
+                    { text: "リバウンド現象", isCorrect: false, rationale: "言葉は似ていますが、正式な病態名は別にあります。" },
+                    { text: "ステロイド酒さ（または酒さ様皮膚炎）", isCorrect: true, rationale: "正解です。お薬の不適切な使用によって引き起こされる副作用としての酒さです。" },
+                    { text: "ニキビ跡", isCorrect: false, rationale: "間違いです。" },
+                    { text: "アレルギー反応", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "酒さは「他の人にうつる」病気ですか？",
+                options: [
+                    { text: "はい、タオルでうつる", isCorrect: false, rationale: "間違いです。バイ菌による感染症ではありません。" },
+                    { text: "いいえ、全くうつらない", isCorrect: true, rationale: "正解です。体質や環境要因による慢性的な炎症であり、他人に伝染することはありません。" },
+                    { text: "はい、握手でうつる", isCorrect: false, rationale: "間違いです。" },
+                    { text: "プールの水でうつることがある", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "化粧品を選ぶ際、酒さの患者さんに推奨すべき製品の表示は何ですか？",
+                options: [
+                    { text: "「最強の洗浄力」", isCorrect: false, rationale: "皮脂を奪いすぎ、刺激になるため不適切です。" },
+                    { text: "「低刺激性」や「敏感肌用」", isCorrect: true, rationale: "正解です。バリア機能が弱っているため、お肌に優しい製品選びが重要です。" },
+                    { text: "「海外製 の 強い香り」", isCorrect: false, rationale: "香料は刺激になることがあるため避けるのが無難です。" },
+                    { text: "「スクラブ入り」", isCorrect: false, rationale: "つぶつぶ（摩擦）は刺激になるので厳禁です。" }
+                ]
+            },
+            {
+                q: "目に充血やゴロゴロ感が出る「眼型（がんけい）酒さ」がある場合、どう対応すべきですか？",
+                options: [
+                    { text: "水道水で 1 日 20 回目を洗うよう勧める", isCorrect: false, rationale: "間違いです。" },
+                    { text: "放置すれば治ると伝える", isCorrect: false, rationale: "眼の合併症は放置すると視力に影響することもあるため不適切です。" },
+                    { text: "皮膚科だけでなく「眼科」の受診を検討する", isCorrect: true, rationale: "正解です。酒さは目にも炎症を起こすことがあるため、専門的な診察が必要です。" },
+                    { text: "目が赤くなるのはお酒のせいだと決めつける", isCorrect: false, rationale: "不適切な対応です。" }
+                ]
+            },
+            {
+                q: "酒さの症状として、「細い血管が糸のように赤く見える」状態を何と呼びますか？",
+                options: [
+                    { text: "皮下出血", isCorrect: false, rationale: "間違いです。" },
+                    { text: "毛細血管拡張（もうさいけっかんかくちょう）", isCorrect: true, rationale: "正解です。血管が広がりっぱなしになり、皮膚から透けて見えている状態です。" },
+                    { text: "静脈瘤", isCorrect: false, rationale: "間違いです。主に足に見られる血管病変です。" },
+                    { text: "ただの 日焼け跡", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "酒さの治療中に、一時的に「ピリピリ感」が出ることが多い塗り薬はどれですか？",
+                options: [
+                    { text: "保湿用の 白色ワセリン", isCorrect: false, rationale: "ワセリンは刺激が非常に少ないのが特徴です。" },
+                    { text: "メトロニダゾール ゲル", isCorrect: true, rationale: "正解です。使い始めに少し刺激を感じることがありますが、多くは使い続けるうちに慣れてきます。" },
+                    { text: "オリーブオイル", isCorrect: false, rationale: "間違いです。" },
+                    { text: "市販の 消毒薬", isCorrect: false, rationale: "消毒薬は酒さには使いません。" }
+                ]
+            },
+            {
+                q: "酒さの患者さんの心理的ケアにおいて、大切な考え方はどれですか？",
+                options: [
+                    { text: "「見た目だけの問題だから気にしないで」と言う", isCorrect: false, rationale: "本人は深く悩んでいるため、このような言葉は傷つけることがあります。" },
+                    { text: "「顔の赤みが QOL（生活の質）に大きく影響することを理解し、共感を持って接する」", isCorrect: true, rationale: "正解です。恥ずかしさや不安を感じている患者さんの気持ちに寄り添うことが最高のケアです。" },
+                    { text: "「性格のせいだ」と教育する", isCorrect: false, rationale: "非常に不適切です。" },
+                    { text: "「とにかく外出しろ」と励ます", isCorrect: false, rationale: "日光を避ける必要があるため、無責任な励ましは危険です。" }
+                ]
+            },
+            {
+                q: "酒さの治療薬として内服（飲み薬）されることがある「テトラサイクリン系」のお薬には、抗菌作用以外にどのような効果がありますか？",
+                options: [
+                    { text: "皮膚を 麻痺 させる効果", isCorrect: false, rationale: "間違いです。" },
+                    { text: "炎症を抑える「抗炎症」効果", isCorrect: true, rationale: "正解です。バイ菌を殺すだけでなく、腫れや赤みを静める働きを期待して処方されます。" },
+                    { text: "食欲を ゼロ にする効果", isCorrect: false, rationale: "間違いです。" },
+                    { text: "筋肉を 柔らかく する効果", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "酒さのスキンケアで「メイク（お化粧）」をしたいという患者さんへのアドバイスは？",
+                options: [
+                    { text: "「お肌に悪いので一生禁止です」", isCorrect: false, rationale: "全面禁止は患者さんのストレスになるため、適切な方法を教えます。" },
+                    { text: "「低刺激で油分の少ないものを選び、赤みをカバーして自信を持つ手段にしましょう」", isCorrect: true, rationale: "正解です。適切な製品を選べばメイクは可能ですし、精神的な支えにもなります。" },
+                    { text: "「何でもいいから厚塗りしてください」", isCorrect: false, rationale: "刺激の強い製品や、落としにくい厚塗りは悪化の原因になります。" },
+                    { text: "「石鹸を使わずにメイクを剥がしてください」", isCorrect: false, rationale: "剥がす（摩擦）のは厳禁です。" }
+                ]
+            },
+            {
+                q: "最後に、クリニックのスタッフとして酒さの患者さんに接する際、最も大切な役割は何ですか？",
+                options: [
+                    { text: "「増悪因子（日光、酒、刺激物）を避ける方法」を一緒に考え、生活指導をすること", isCorrect: true, rationale: "正解です。酒さは日々の生活管理が治療の半分以上を占めるため、スタッフの丁寧な指導が完治への鍵です。" },
+                    { text: "いかに 早く 洗顔を終わらせるか競うこと", isCorrect: false, rationale: "間違いです。" },
+                    { text: "難しい 専門用語 をたくさん使って驚かせること", isCorrect: false, rationale: "分かりやすく伝えることがプロの仕事です。" },
+                    { text: "一生 治らない と宣告すること", isCorrect: false, rationale: "適切な治療と管理で、多くの方は良い状態を維持できます。" }
+                ]
+            }
+        ];
+
+        const quiz = {
+            currentIdx: 0,
+            score: 0,
+            hasAnsweredCurrent: false,
+            userAnswers: new Array(quizData.length).fill(null),
+            scoredQuestions: new Set(),
+            
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                this.render();
+            },
+            
+            render() {
+                this.hasAnsweredCurrent = false;
+                const q = quizData[this.currentIdx];
+                document.getElementById('progress-text').innerText = `Question ${this.currentIdx + 1} / ${quizData.length}`;
+                document.getElementById('progress-bar').style.width = `${((this.currentIdx + 1) / quizData.length) * 100}%`;
+                
+                const prevBtn = document.getElementById('global-prev-btn');
+                if (this.currentIdx > 0) prevBtn.classList.remove('invisible');
+                else prevBtn.classList.add('invisible');
+                
+                document.getElementById('question-text').innerHTML = this.wrapGlossaryTerms(q.q);
+                
+                const optionsDiv = document.getElementById('options');
+                optionsDiv.innerHTML = '';
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-200 font-medium text-sm sm:text-base shadow-sm leading-snug";
+                    btn.innerText = `${i + 1}. ${opt.text}`;
+                    btn.onclick = () => this.showRationale(i);
+                    optionsDiv.appendChild(btn);
+                });
+                
+                document.getElementById('explanation-box').classList.add('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+                
+                if (this.userAnswers[this.currentIdx] !== null) {
+                    this.showRationale(this.userAnswers[this.currentIdx], true);
+                }
+            },
+
+            wrapGlossaryTerms(text) {
+                let html = text;
+                const sortedTerms = Object.keys(glossary).sort((a, b) => b.length - a.length);
+                sortedTerms.forEach(term => {
+                    const regex = new RegExp(term, 'g');
+                    if (html.indexOf(term) !== -1 && !html.includes(`>${term}<`)) {
+                        html = html.split(term).join(`<span class="glossary-term" onclick="openGlossary('${term}')">${term}</span>`);
+                    }
+                });
+                return html;
+            },
+            
+            showRationale(idx, isReview = false) {
+                const q = quizData[this.currentIdx];
+                const opt = q.options[idx];
+                const expBox = document.getElementById('explanation-box');
+                const header = document.getElementById('feedback-header');
+                const icon = document.getElementById('status-icon');
+                const rationaleElem = document.getElementById('rationale-text');
+                const nextBtn = document.getElementById('next-btn');
+                const buttons = document.querySelectorAll('#options button');
+
+                if (!isReview && !this.scoredQuestions.has(this.currentIdx)) {
+                    this.userAnswers[this.currentIdx] = idx;
+                    if (opt.isCorrect) this.score++;
+                    this.scoredQuestions.add(this.currentIdx);
+                } else if (!isReview) {
+                    this.userAnswers[this.currentIdx] = idx;
+                }
+
+                buttons.forEach((btn, i) => {
+                    btn.classList.remove('correct-btn', 'wrong-btn', 'ring-2', 'ring-indigo-500', 'neutral-btn');
+                    if (q.options[i].isCorrect) btn.classList.add('correct-btn');
+                    else btn.classList.add('neutral-btn');
+                });
+                
+                if (!opt.isCorrect) {
+                    buttons[idx].classList.remove('neutral-btn');
+                    buttons[idx].classList.add('wrong-btn');
+                    icon.innerText = "❌ ざんねん...";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-red-600";
+                } else {
+                    icon.innerText = "✅ 正解です！";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-green-600";
+                }
+                
+                buttons[idx].classList.add('ring-2', 'ring-indigo-500');
+                rationaleElem.innerHTML = this.wrapGlossaryTerms(opt.rationale);
+                expBox.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                
+                if (!isReview) {
+                    setTimeout(() => {
+                        expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }
+            },
+            
+            next() {
+                this.currentIdx++;
+                if(this.currentIdx < quizData.length) {
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    this.showResult();
+                }
+            },
+
+            prev() {
+                if (this.currentIdx > 0) {
+                    this.currentIdx--;
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+            
+            showResult() {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('score-display').innerText = this.score;
+                
+                let msg = "";
+                if(this.score === 20) msg = "完璧です！今日からあなたも「酒さ」のきほんをマスターしたプロのスタッフですね。素晴らしい！";
+                else if(this.score >= 16) msg = "素晴らしい！基本的なことはほぼすべて理解できています。明日からの患者様への対応に自信を持ってください。";
+                else if(this.score >= 12) msg = "合格点です。いくつか間違いやすいところ（ニキビとの違いなど）を再確認しておけばバッチリです。";
+                else msg = "お疲れ様でした。まずは「酒さの悪化因子」や「お薬の塗り方」から、もう一度見直してみましょう。";
+                
+                document.getElementById('result-message').innerText = msg;
+            }
+        };
+
+        function openGlossary(term) {
+            document.getElementById('glossary-title').innerText = term;
+            document.getElementById('glossary-body').innerText = glossary[term];
+            document.getElementById('glossary-modal').classList.remove('hidden');
+        }
+
+        function closeGlossary() {
+            document.getElementById('glossary-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+```

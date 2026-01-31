@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>皮膚科スタッフ必須知識テスト - 基礎30問</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .correct-btn { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong-btn { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .neutral-btn { background-color: #f8fafc !important; border-color: #e2e8f0 !important; color: #64748b !important; }
+        .selected-ring { ring: 2px; ring-color: #6366f1; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+    <div id="app" class="max-w-2xl mx-auto px-4 py-8">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4">皮膚科スタッフ必須知識<br>基礎固めテスト（30問）</h1>
+            <p class="text-slate-600 mb-8 leading-relaxed text-sm">
+                クリニックでの診療を理解し、患者様に正しく伝えるための基礎知識です。<br>
+                回答後、すべての選択肢の「なぜそうなのか」を確認して学習しましょう。
+            </p>
+            <button onclick="quiz.start()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-12 rounded-full transition-all shadow-md">
+                テストを開始する
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <button id="global-prev-btn" onclick="quiz.prev()" class="text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 invisible">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    前の問題
+                </button>
+                <span id="progress-text" class="text-sm font-medium text-slate-500">Question 1 / 30</span>
+                <div class="w-1/2 bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="question-container" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in mb-6">
+                <h2 id="question-text" class="text-lg font-bold mb-6">問題文</h2>
+                <div id="options" class="space-y-3">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+
+            <!-- Detailed Explanation Area -->
+            <div id="explanation-box" class="hidden p-6 rounded-2xl mb-6 fade-in border bg-white shadow-sm border-indigo-100">
+                <div id="feedback-header" class="flex items-center gap-2 mb-2 font-bold">
+                    <span id="status-icon"></span>
+                    <span id="status-text"></span>
+                </div>
+                <div id="rationale-text" class="text-slate-700 text-sm leading-relaxed mb-4"></div>
+                <p class="text-[10px] text-slate-400 mb-4 font-medium italic">※他の選択肢ボタンをタップすると、その項目の解説を確認できます。</p>
+                
+                <div class="flex gap-3">
+                    <button id="next-btn" onclick="quiz.next()" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100">
+                        次の問題へ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-bold mb-4 text-slate-800">お疲れ様でした！</h2>
+            <div class="text-6xl font-black text-indigo-600 mb-4"><span id="score-display">0</span> / 30</div>
+            <p id="result-message" class="text-slate-600 mb-8 leading-relaxed"></p>
+            <button onclick="location.reload()" class="bg-slate-800 text-white py-3 px-10 rounded-full font-bold">
+                もう一度最初から挑戦する
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                q: "成人の皮膚の「表面積」について正しい説明はどれですか？",
+                options: [
+                    { text: "平均約1.6m2であり、畳約1枚分に相当する", isCorrect: true, rationale: "正解です。成人男子の平均的な表面積は1.6m2であり、畳1枚分程度の広さがあると記載されています。" },
+                    { text: "平均約0.8m2であり、バスタオル1枚分程度である", isCorrect: false, rationale: "間違いです。皮膚の面積はもっと広く、平均1.6m2あります。" },
+                    { text: "人によって差がなく、全員1.0m2固定である", isCorrect: false, rationale: "間違いです。体格によって異なりますが、成人の平均としては1.6m2とされています。" },
+                    { text: "体重の50%以上の面積を占めている", isCorrect: false, rationale: "「面積」を体重（重量）の割合で表すのは不適切です。重量は約14%を占めます。" }
+                ]
+            },
+            {
+                q: "皮膚の重量（皮下脂肪を含む）は、体重の約何％を占めていますか？",
+                options: [
+                    { text: "約5%", isCorrect: false, rationale: "少なすぎます。皮膚は人体で非常に大きな割合を占める臓器です。" },
+                    { text: "約8%", isCorrect: false, rationale: "間違いです。これよりも大きな割合を占めています。" },
+                    { text: "約14%", isCorrect: true, rationale: "正解です。重量は皮下脂肪を含めると約9kgに及び、体重の約14%に達します。" },
+                    { text: "約30%", isCorrect: false, rationale: "多すぎます。そこまでいくと筋肉や骨よりも重くなってしまいます。" }
+                ]
+            },
+            {
+                q: "皮膚の3層構造を表面から深い順に正しく並べたものはどれですか？",
+                options: [
+                    { text: "真皮 → 表皮 → 皮下組織", isCorrect: false, rationale: "間違いです。最表面は「表皮」です。" },
+                    { text: "表皮 → 真皮 → 皮下組織", isCorrect: true, rationale: "正解です。皮膚は表面より、表皮、真皮、皮下組織の3つの部分より成り立っています。" },
+                    { text: "表皮 → 皮下組織 → 真皮", isCorrect: false, rationale: "間違いです。血管や神経が豊富な真皮が中間にあります。" },
+                    { text: "角質層 → 基底層 → 真皮乳頭", isCorrect: false, rationale: "これらは表皮や真皮の「内部の層」の名前であり、皮膚全体の3大区分ではありません。" }
+                ]
+            },
+            {
+                q: "表皮の約95％を占める細胞で、角化の主役となるものは何ですか？",
+                options: [
+                    { text: "角化細胞（ケラチノサイト）", isCorrect: true, rationale: "正解です。表皮の95%を占め、最下層で生まれた後、徐々に角質へと変化（角化）していきます。" },
+                    { text: "色素細胞（メラノサイト）", isCorrect: false, rationale: "間違いです。メラニンを作る細胞ですが、表皮に占める割合はごく一部です。" },
+                    { text: "ランゲルハンス細胞", isCorrect: false, rationale: "間違いです。免疫を司る細胞であり、表皮内の数％程度です。" },
+                    { text: "線維芽細胞", isCorrect: false, rationale: "間違いです。これは表皮ではなく「真皮」に存在する、コラーゲンなどを作る細胞です。" }
+                ]
+            },
+            {
+                q: "表皮の最下層にあり、新しい細胞を生み出している層は何ですか？",
+                options: [
+                    { text: "角質層", isCorrect: false, rationale: "間違いです。角質層は最外層（一番表面）であり、死んだ細胞の層です。" },
+                    { text: "顆粒層", isCorrect: false, rationale: "間違いです。顆粒層は角質層のすぐ下、有棘層の上にあります。" },
+                    { text: "有棘層", isCorrect: false, rationale: "間違いです。有棘層は基底層の上にあり、表皮で最も厚い層です。" },
+                    { text: "基底層", isCorrect: true, rationale: "正解です。表皮の最下層に位置し、ここで細胞分裂が行われて新しい細胞が作られます。" }
+                ]
+            },
+            {
+                q: "メラニン色素を作り、皮膚の色や紫外線の防御に関わる細胞は何ですか？",
+                options: [
+                    { text: "メルケル細胞", isCorrect: false, rationale: "間違いです。メルケル細胞は感覚（触覚）に関与する細胞です。" },
+                    { text: "ランゲルハンス細胞", isCorrect: false, rationale: "間違いです。免疫機能を担う細胞です。" },
+                    { text: "色素細胞（メラノサイト）", isCorrect: true, rationale: "正解です。基底層に点在し、メラニン色素を作って周囲の細胞に供給します。" },
+                    { text: "基底細胞", isCorrect: false, rationale: "間違いです。基底細胞は角化細胞（ケラチノサイト）に分化する細胞です。" }
+                ]
+            },
+            {
+                q: "皮膚の免疫機能を担い、異物を認識して伝える「番人」のような細胞は？",
+                options: [
+                    { text: "ランゲルハンス細胞", isCorrect: true, rationale: "正解です。樹枝状の突起を持ち、表皮内で外部からの刺激や異物をキャッチする免疫の役割を担います。" },
+                    { text: "線維芽細胞", isCorrect: false, rationale: "間違いです。真皮で組織を支える線維を作る細胞です。" },
+                    { text: "肥満細胞（マスト細胞）", isCorrect: false, rationale: "間違いです。真皮にあり、アレルギー反応の際にかゆみの元となる物質を出しますが、表皮の樹枝状細胞ではありません。" },
+                    { text: "角質細胞", isCorrect: false, rationale: "間違いです。死んだ細胞として物理的なバリアを形成する細胞です。" }
+                ]
+            },
+            {
+                q: "手掌（手のひら）や足底（足の裏）にのみ見られる、透明な層は何ですか？",
+                options: [
+                    { text: "有棘層", isCorrect: false, rationale: "間違いです。有棘層は全身の表皮に共通して存在する厚い層です。" },
+                    { text: "透明層", isCorrect: true, rationale: "正解です。手のひらや足の裏のように表皮が非常に厚い部位にのみ、顆粒層と角質層の間に存在します。" },
+                    { text: "真皮乳頭層", isCorrect: false, rationale: "間違いです。真皮乳頭は真皮の表面部分を指します。" },
+                    { text: "網状層", isCorrect: false, rationale: "間違いです。網状層は真皮の深い部分の名前です。" }
+                ]
+            },
+            {
+                q: "正常な皮膚の「角化速度（ターンオーバー）」は約何日間ですか？",
+                options: [
+                    { text: "14〜20日", isCorrect: false, rationale: "短すぎます。これは一部の皮膚疾患でサイクルが速まっている時の数値です。" },
+                    { text: "28〜40日", isCorrect: true, rationale: "正解です。基底細胞が分裂して、角質となって剥がれ落ちるまでのサイクルは約28〜40日とされています。" },
+                    { text: "60〜90日", isCorrect: false, rationale: "長すぎます。加齢により遅延しますが、正常な生理的なサイクルではありません。" },
+                    { text: "約10日", isCorrect: false, rationale: "異常に速すぎます。皮膚の形成が追いつかないような状態です。" }
+                ]
+            },
+            {
+                q: "真皮の約90％を占める、皮膚の強度とハリを支える主成分は何ですか？",
+                options: [
+                    { text: "弾性線維（エラスチン）", isCorrect: false, rationale: "間違いです。エラスチンは真皮の数％であり、弾力を担当します。主役はコラーゲンです。" },
+                    { text: "膠原線維（コラーゲン）", isCorrect: true, rationale: "正解です。真皮の90%を占め、外部からの刺激に耐える強度を皮膚に提供しています。" },
+                    { text: "ヒアルロン酸", isCorrect: false, rationale: "間違いです。ヒアルロン酸は「基質」の一部であり、水分を蓄える役割ですが、線維そのものではありません。" },
+                    { text: "皮下脂肪", isCorrect: false, rationale: "間違いです。皮下組織の成分であり、真皮の主成分ではありません。" }
+                ]
+            },
+            {
+                q: "真皮に存在し、コラーゲンやエラスチンを作り出す細胞は何ですか？",
+                options: [
+                    { text: "角化細胞", isCorrect: false, rationale: "間違いです。表皮を構成する細胞です。" },
+                    { text: "色素細胞", isCorrect: false, rationale: "間違いです。表皮でメラニンを作る細胞です。" },
+                    { text: "線維芽細胞", isCorrect: true, rationale: "正解です。真皮内にあり、コラーゲン、エラスチン、基質（ムコ多糖類）のすべてを生成する重要な細胞です。" },
+                    { text: "ランゲルハンス細胞", isCorrect: false, rationale: "間違いです。表皮の免疫細胞です。" }
+                ]
+            },
+            {
+                q: "真皮と表皮の境界部分で、表皮に栄養を送るループ状の血管がある場所は？",
+                options: [
+                    { text: "真皮網状層", isCorrect: false, rationale: "間違いです。網状層はもっと深い位置にあり、太い血管が通っています。" },
+                    { text: "真皮乳頭", isCorrect: true, rationale: "正解です。真皮の表面にある凹凸部分（乳頭）の中に、毛細血管がループを作って入り込み、表皮を養っています。" },
+                    { text: "皮下組織", isCorrect: false, rationale: "間違いです。もっと深い層の名前です。" },
+                    { text: "角質層", isCorrect: false, rationale: "間違いです。表皮には血管は通っていません。" }
+                ]
+            },
+            {
+                q: "皮下組織の主な構成成分は何ですか？",
+                options: [
+                    { text: "神経細胞", isCorrect: false, rationale: "間違いです。神経も通っていますが、層としての主成分は脂肪です。" },
+                    { text: "膠原線維", isCorrect: false, rationale: "間違いです。膠原線維は主に真皮に分布します。" },
+                    { text: "脂肪細胞", isCorrect: true, rationale: "正解です。皮下組織は多量の脂肪細胞を含み、断熱やクッションの役割を果たします。" },
+                    { text: "メラノサイト", isCorrect: false, rationale: "間違いです。表皮にあります。" }
+                ]
+            },
+            {
+                q: "毛が作られる根本の膨らんだ部分を何と呼びますか？",
+                options: [
+                    { text: "毛幹", isCorrect: false, rationale: "間違いです。皮膚の表面に出ている部分のことです。" },
+                    { text: "毛球", isCorrect: true, rationale: "正解です。毛の根元の膨らんだ部分を毛球と呼び、その中に毛を作る毛母細胞があります。" },
+                    { text: "毛包", isCorrect: false, rationale: "間違いです。毛を取り囲んでいる鞘（さや）のような組織全体を指します。" },
+                    { text: "立毛筋", isCorrect: false, rationale: "間違いです。毛を立たせるための筋肉です。" }
+                ]
+            },
+            {
+                q: "爪の成長速度について、手の爪は1日に約どのくらい伸びますか？",
+                options: [
+                    { text: "約0.01mm", isCorrect: false, rationale: "少なすぎます。" },
+                    { text: "約0.1mm", isCorrect: true, rationale: "正解です。手の爪は1日0.1mm（1か月で3mm）伸び、足の爪はその半分程度の速度です。" },
+                    { text: "約1.0mm", isCorrect: false, rationale: "多すぎます。1か月で3cmも伸びることになってしまいます。" },
+                    { text: "約0.5mm", isCorrect: false, rationale: "間違いです。これは早すぎます。" }
+                ]
+            },
+            {
+                q: "皮脂腺が油分（皮脂）を分泌する場所は、通常どこに開口していますか？",
+                options: [
+                    { text: "皮膚の表面に直接", isCorrect: false, rationale: "間違いです。ほとんどの皮脂腺は「毛包」の横にあり、毛の通り道へ分泌されます。" },
+                    { text: "毛包（毛穴）の中", isCorrect: true, rationale: "正解です。皮脂は毛包の上部に開口して分泌され、毛や皮膚表面を覆って保護します。" },
+                    { text: "真皮の深い部分", isCorrect: false, rationale: "間違いです。そこに分泌しても皮膚表面を潤すことができません。" },
+                    { text: "汗孔（汗の穴）", isCorrect: false, rationale: "間違いです。汗孔は汗腺の出口です。" }
+                ]
+            },
+            {
+                q: "「鳥肌」を立てる筋肉である立毛筋がない部位はどこですか？",
+                options: [
+                    { text: "眉毛・睫毛（まつげ）", isCorrect: true, rationale: "正解です。眉毛、睫毛、鼻毛、腋毛には立毛筋が存在しないとされています。" },
+                    { text: "頭髪", isCorrect: false, rationale: "間違いです。頭髪には立毛筋があり、寒冷時に反応します。" },
+                    { text: "前腕の毛", isCorrect: false, rationale: "間違いです。腕の毛には立毛筋があります。" },
+                    { text: "背中の毛", isCorrect: false, rationale: "間違いです。背中の毛にも立毛筋は存在します。" }
+                ]
+            },
+            {
+                q: "全身に分布し、体温調節のために水分を出す汗腺は何ですか？",
+                options: [
+                    { text: "アポクリン腺", isCorrect: false, rationale: "間違いです。アポクリン腺は腋窩など一部にしかなく、体温調節が主な目的ではありません。" },
+                    { text: "エクリン腺", isCorrect: true, rationale: "正解です。全身に約230万個あり、サラサラとした汗を出して体温を調節する重要な腺です。" },
+                    { text: "独立脂腺", isCorrect: false, rationale: "間違いです。脂を出す腺です。" },
+                    { text: "大汗腺", isCorrect: false, rationale: "大汗腺はアポクリン腺の別名であり、体温調節用の汗腺ではありません。" }
+                ]
+            },
+            {
+                q: "アポクリン腺（大汗腺）が多く分布している部位はどこですか？",
+                options: [
+                    { text: "手のひら・足の裏", isCorrect: false, rationale: "間違いです。ここには体温調節や緊張用のエクリン腺が非常に多いです。" },
+                    { text: "背中・お腹", isCorrect: false, rationale: "間違いです。アポクリン腺は限られた場所にしかありません。" },
+                    { text: "腋窩（わき）・外陰部", isCorrect: true, rationale: "正解です。腋窩、乳輪、外陰部などにあり、思春期から発達してニオイの元となる汗を出します。" },
+                    { text: "額（ひたい）", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "皮膚の「バリア機能」において、最も重要な役割を担っている層はどこですか？",
+                options: [
+                    { text: "基底層", isCorrect: false, rationale: "間違いです。基底層は新しい細胞を作る場所です。" },
+                    { text: "真皮層", isCorrect: false, rationale: "間違いです。真皮はクッションや支えの役割です。" },
+                    { text: "角質層", isCorrect: true, rationale: "正解です。皮膚の最外層にある角質層が、外界からの刺激の侵入と体内の水分の蒸散を防ぐ最大のバリアです。" },
+                    { text: "皮下組織", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "紫外線（UV）から身体を守るために、表皮で増える物質は何ですか？",
+                options: [
+                    { text: "ケラチン", isCorrect: false, rationale: "間違いです。ケラチンは強度を担当するタンパク質です。" },
+                    { text: "メラニン色素", isCorrect: true, rationale: "正解です。メラニンは紫外線を吸収するフィルターとなり、細胞内のDNAを保護します。" },
+                    { text: "皮脂", isCorrect: false, rationale: "間違いです。皮脂は保湿や抗菌に働きますが、UVカットの主成分ではありません。" },
+                    { text: "コラーゲン", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "皮膚で日光（紫外線）を浴びることで合成される重要な栄養素は何ですか？",
+                options: [
+                    { text: "ビタミンA", isCorrect: false, rationale: "間違いです。食事から摂取します。" },
+                    { text: "ビタミンC", isCorrect: false, rationale: "間違いです。" },
+                    { text: "ビタミンD", isCorrect: true, rationale: "正解です。紫外線のエネルギーによって皮膚内の物質からビタミンDが生成され、カルシウムの吸収を助けます。" },
+                    { text: "カルシウム", isCorrect: false, rationale: "カルシウムそのものが皮膚で作られるわけではありません。ビタミンDがその吸収を助けます。" }
+                ]
+            },
+            {
+                q: "外界の温度が「上がった」ときの皮膚の反応として正しいのはどれですか？",
+                options: [
+                    { text: "血管が収縮し、発汗が止まる", isCorrect: false, rationale: "間違いです。それは「寒い時」の反応です。" },
+                    { text: "血管が拡張し、発汗が増加する", isCorrect: true, rationale: "正解です。血管を広げて熱を逃がしやすくし、汗の気化熱で体温を下げようとします。" },
+                    { text: "皮下脂肪が厚くなる", isCorrect: false, rationale: "間違いです。温度変化で脂肪の厚みが即座に変わることはありません。" },
+                    { text: "立毛筋が収縮する", isCorrect: false, rationale: "間違いです。立毛筋収縮（鳥肌）は「寒い時」に熱を逃がさないようにする反応です。" }
+                ]
+            },
+            {
+                q: "皮膚の「吸収作用」について、外用薬（塗り薬）が吸収されやすい性質はどれですか？",
+                options: [
+                    { text: "水に溶けやすい（水溶性）性質", isCorrect: false, rationale: "間違いです。角質層は水を弾く性質があるため、水溶性物質の吸収はよくありません。" },
+                    { text: "油に溶けやすい（脂溶性）性質", isCorrect: true, rationale: "正解です。皮膚は脂溶性の物質を吸収しやすい性質があり、多くの外用薬はこの性質を利用しています。" },
+                    { text: "粒子が非常に大きい性質", isCorrect: false, rationale: "間違いです。粒子が大きいとバリアに阻まれて吸収されません。" },
+                    { text: "アルカリ性の性質", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "触覚や圧覚を感じ取る神経の末端（受容器）が多く存在する場所はどこですか？",
+                options: [
+                    { text: "角質層の表面", isCorrect: false, rationale: "間違いです。角質層は死んだ細胞なので感覚はありません。" },
+                    { text: "真皮乳頭層", isCorrect: true, rationale: "正解です。真皮の浅い部分である乳頭層には、触覚や圧覚を感じる受容器が豊富にあります。" },
+                    { text: "皮下脂肪の最深部", isCorrect: false, rationale: "間違いです。太い神経は通っていますが、繊細な感覚のメインはもっと表面です。" },
+                    { text: "爪の表面", isCorrect: false, rationale: "間違いです。爪そのものに神経はありません。" }
+                ]
+            },
+            {
+                q: "かつては「痛みの弱いもの」とされた「かゆみ」の最新の考え方はどれですか？",
+                options: [
+                    { text: "痛みの一種であり、伝達ルートも同じである", isCorrect: false, rationale: "間違いです。かつての説ですが、今は否定されています。" },
+                    { text: "痛みとは別の「かゆみ専用の神経」によって伝わる", isCorrect: true, rationale: "正解です。かゆみを伝えるための独立した神経と伝達ルートがあることがわかっています。" },
+                    { text: "脳で勝手に作られる錯覚である", isCorrect: false, rationale: "間違いです。末梢の受容体で刺激をしっかり受け取っています。" },
+                    { text: "精神的なストレスのみが原因である", isCorrect: false, rationale: "間違いです。ヒスタミンなどの物質による末梢性の反応も大きな原因です。" }
+                ]
+            },
+            {
+                q: "緊張した時に「手に汗を握る」ような発汗を何と呼びますか？",
+                options: [
+                    { text: "温熱性発汗", isCorrect: false, rationale: "間違いです。暑い時に体温を下げるための発汗です。" },
+                    { text: "精神性発汗", isCorrect: true, rationale: "正解です。驚きや緊張などの刺激で、手掌、足底、腋窩などに起こる発汗です。" },
+                    { text: "味覚性発汗", isCorrect: false, rationale: "間違いです。辛いものを食べた時に顔などに出る発汗です。" },
+                    { text: "不感蒸泄", isCorrect: false, rationale: "間違いです。自覚のない水分の蒸発のことです。" }
+                ]
+            },
+            {
+                q: "自覚されないまま皮膚から常に蒸発している水分のことを何と言いますか？",
+                options: [
+                    { text: "発汗", isCorrect: false, rationale: "間違いです。発汗は汗腺からの分泌を指します。" },
+                    { text: "不感知性発汗（不感蒸泄）", isCorrect: true, rationale: "正解です。汗をかいている自覚がなくても、皮膚表面から水分が常に逃げている現象です。" },
+                    { text: "感知性発汗", isCorrect: false, rationale: "間違いです。汗として自覚できる分泌のことです。" },
+                    { text: "粘膜分泌", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "皮膚が「酸性」に保たれている理由として正しいものはどれですか？",
+                options: [
+                    { text: "汗や皮脂が混ざった「皮脂膜」が弱酸性だから", isCorrect: true, rationale: "正解です。皮脂と汗、角質成分が混ざった皮脂膜はpH4.5〜6.5の弱酸性で、細菌の増殖を抑えます。" },
+                    { text: "空気中の二酸化炭素を取り込んでいるから", isCorrect: false, rationale: "間違いです。ガス交換もわずかに行いますが、それが酸性の主な理由ではありません。" },
+                    { text: "皮膚にアルカリ性の物質は存在しないから", isCorrect: false, rationale: "間違いです。体液そのものは弱アルカリ性ですが、表面は酸性バリアを保っています。" },
+                    { text: "毎日石鹸で洗っているから", isCorrect: false, rationale: "間違いです。むしろ石鹸はアルカリ性のものが多く、一時的にpHを上げます。" }
+                ]
+            },
+            {
+                q: "皮膚の乾燥を防ぐために、角質層内で水分を抱え込んでいる物質の代表は何ですか？",
+                options: [
+                    { text: "メラニン", isCorrect: false, rationale: "間違いです。色素です。" },
+                    { text: "セラミド（細胞間脂質）", isCorrect: true, rationale: "正解です。角質細胞の間を埋めるセラミドなどの細胞間脂質や天然保湿因子が、水分を強力に保持しています。" },
+                    { text: "コラーゲン", isCorrect: false, rationale: "間違いです。コラーゲンは真皮の弾力成分です。角質層の水分保持の主役は細胞間脂質です。" },
+                    { text: "ヘモグロビン", isCorrect: false, rationale: "間違いです。血中の赤い色素です。" }
+                ]
+            }
+        ];
+
+        const quiz = {
+            currentIdx: 0,
+            score: 0,
+            hasAnsweredCurrent: false,
+            userAnswers: new Array(quizData.length).fill(null), // ユーザーが選んだインデックスを保存
+            scoredQuestions: new Set(), // スコア加算済みの問題番号を追跡
+            
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                this.render();
+            },
+            
+            render() {
+                const q = quizData[this.currentIdx];
+                
+                // プログレス表示の更新
+                document.getElementById('progress-text').innerText = `Question ${this.currentIdx + 1} / ${quizData.length}`;
+                document.getElementById('progress-bar').style.width = `${((this.currentIdx + 1) / quizData.length) * 100}%`;
+                
+                // 「前の問題」ボタンの表示制御
+                const prevBtn = document.getElementById('global-prev-btn');
+                if (this.currentIdx > 0) {
+                    prevBtn.classList.remove('invisible');
+                } else {
+                    prevBtn.classList.add('invisible');
+                }
+                
+                document.getElementById('question-text').innerText = q.q;
+                
+                const optionsDiv = document.getElementById('options');
+                optionsDiv.innerHTML = '';
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all duration-200 font-medium text-sm sm:text-base shadow-sm";
+                    btn.innerText = `${i + 1}. ${opt.text}`;
+                    btn.onclick = () => this.showRationale(i);
+                    optionsDiv.appendChild(btn);
+                });
+                
+                document.getElementById('explanation-box').classList.add('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+                
+                // すでに回答済みの場合はその状態を再現
+                if (this.userAnswers[this.currentIdx] !== null) {
+                    this.showRationale(this.userAnswers[this.currentIdx], true);
+                }
+            },
+            
+            showRationale(idx, isReview = false) {
+                const q = quizData[this.currentIdx];
+                const opt = q.options[idx];
+                const expBox = document.getElementById('explanation-box');
+                const header = document.getElementById('feedback-header');
+                const icon = document.getElementById('status-icon');
+                const text = document.getElementById('status-text');
+                const rationale = document.getElementById('rationale-text');
+                const nextBtn = document.getElementById('next-btn');
+                const buttons = document.querySelectorAll('#options button');
+
+                // 最初の回答時かつ、新規回答の場合のみスコア加算
+                if (!isReview && !this.scoredQuestions.has(this.currentIdx)) {
+                    this.userAnswers[this.currentIdx] = idx;
+                    if (opt.isCorrect) {
+                        this.score++;
+                    }
+                    this.scoredQuestions.add(this.currentIdx);
+                } else if (!isReview) {
+                    // 復習中に他の選択肢を選んだ場合も記録だけ更新
+                    this.userAnswers[this.currentIdx] = idx;
+                }
+
+                // ボタンのスタイルリセット
+                buttons.forEach((btn, i) => {
+                    btn.classList.remove('correct-btn', 'wrong-btn', 'ring-2', 'ring-indigo-500', 'neutral-btn');
+                    if (q.options[i].isCorrect) {
+                        btn.classList.add('correct-btn');
+                    } else {
+                        btn.classList.add('neutral-btn');
+                    }
+                });
+                
+                // 選択したものが不正解なら赤くする
+                if (!opt.isCorrect) {
+                    buttons[idx].classList.remove('neutral-btn');
+                    buttons[idx].classList.add('wrong-btn');
+                    icon.innerText = "🔍 解説 (不正解)";
+                    text.innerText = "";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-red-600";
+                } else {
+                    icon.innerText = "✨ 正解のポイント";
+                    text.innerText = "";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-green-600";
+                }
+                
+                buttons[idx].classList.add('ring-2', 'ring-indigo-500');
+                
+                rationale.innerText = opt.rationale;
+                expBox.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                
+                // スムーズスクロール (レビュー時以外)
+                if (!isReview) {
+                    setTimeout(() => {
+                        expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }
+            },
+            
+            next() {
+                this.currentIdx++;
+                if(this.currentIdx < quizData.length) {
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    this.showResult();
+                }
+            },
+
+            prev() {
+                if (this.currentIdx > 0) {
+                    this.currentIdx--;
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+            
+            showResult() {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('score-display').innerText = this.score;
+                
+                let msg = "";
+                if(this.score === 30) msg = "満点！パーフェクトです！皮膚科スタッフの鑑ですね。自信を持って診療に臨んでください。";
+                else if(this.score >= 25) msg = "素晴らしい成績です！基礎はほぼ完璧にマスターできています。間違えた箇所だけ再確認しておきましょう。";
+                else if(this.score >= 20) msg = "合格点です！日常業務に必要な知識は身についています。より深い理解のために、解説を読み込んでみてください。";
+                else msg = "お疲れ様でした。まずは皮膚の3層構造（表皮・真皮・皮下組織）の役割から、もう一度復習してみましょう。";
+                
+                document.getElementById('result-message').innerText = msg;
+            }
+        };
+    </script>
+</body>
+</html>
+```

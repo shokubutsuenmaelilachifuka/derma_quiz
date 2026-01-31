@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>皮膚科スタッフ必須知識テスト - 疾患編30問</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .correct-btn { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong-btn { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .neutral-btn { background-color: #f8fafc !important; border-color: #e2e8f0 !important; color: #64748b !important; }
+        /* 用語解説リンクのスタイル */
+        .glossary-term { color: #4f46e5; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font-weight: 600; }
+        .glossary-term:hover { color: #3730a3; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+    <div id="app" class="max-w-2xl mx-auto px-4 py-8">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4">皮膚科スタッフ必須知識<br>臨床・疾患編テスト（30問）</h1>
+            <p class="text-slate-600 mb-8 leading-relaxed text-sm">
+                実際の皮膚疾患の特徴や検査に関する知識を問います。<br>
+                解説文の<span class="glossary-term">青い用語</span>をタップすると詳しい意味が表示されます。
+            </p>
+            <button onclick="quiz.start()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-12 rounded-full transition-all shadow-md">
+                テストを開始する
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <button id="global-prev-btn" onclick="quiz.prev()" class="text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 invisible">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    前の問題
+                </button>
+                <span id="progress-text" class="text-sm font-medium text-slate-500">Question 1 / 30</span>
+                <div class="w-1/2 bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="question-container" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in mb-6">
+                <h2 id="question-text" class="text-lg font-bold mb-6">問題文</h2>
+                <div id="options" class="space-y-3">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+
+            <!-- Detailed Explanation Area -->
+            <div id="explanation-box" class="hidden p-6 rounded-2xl mb-6 fade-in border bg-white shadow-sm border-indigo-100">
+                <div id="feedback-header" class="flex items-center gap-2 mb-2 font-bold">
+                    <span id="status-icon"></span>
+                    <span id="status-text"></span>
+                </div>
+                <!-- 重点：ここが用語解説が含まれる rationale-text -->
+                <div id="rationale-text" class="text-slate-700 text-sm leading-relaxed mb-4"></div>
+                
+                <p class="text-[10px] text-slate-400 mb-4 font-medium italic">※他の選択肢ボタンをタップすると、その項目の解説を確認できます。</p>
+                
+                <div class="flex gap-3">
+                    <button id="next-btn" onclick="quiz.next()" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition-colors hidden shadow-lg shadow-indigo-100">
+                        次の問題へ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-bold mb-4 text-slate-800">お疲れ様でした！</h2>
+            <div class="text-6xl font-black text-indigo-600 mb-4"><span id="score-display">0</span> / 30</div>
+            <p id="result-message" class="text-slate-600 mb-8 leading-relaxed"></p>
+            <button onclick="location.reload()" class="bg-slate-800 text-white py-3 px-10 rounded-full font-bold">
+                もう一度最初から挑戦する
+            </button>
+        </div>
+    </div>
+
+    <!-- 用語解説モーダル -->
+    <div id="glossary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl fade-in">
+            <h3 id="glossary-title" class="text-lg font-bold text-indigo-700 mb-3 border-b pb-2">用語解説</h3>
+            <p id="glossary-body" class="text-slate-600 text-sm leading-relaxed mb-6"></p>
+            <button onclick="closeGlossary()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 rounded-xl transition-colors">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 用語辞典データ (教科書ベース)
+        const glossary = {
+            "紅斑": "血管の拡張により、皮膚表面が赤くなった状態。指で押すと赤みが消えるのが特徴です。",
+            "丘疹": "皮膚の表面が直径1cm未満で盛り上がった状態。湿疹の初期段階などに見られます。",
+            "水疱": "表皮内または表皮の下に液体が溜まった、いわゆる「水ぶくれ」。",
+            "膿疱": "水疱の中に白血球（膿）が溜まったもの。とびひやニキビで見られます。",
+            "びらん": "表皮が剥がれ、真皮が露出した湿潤した状態。ただれのこと。",
+            "落屑": "古くなった角質が粉状や板状になって剥がれ落ちること。フケのような状態。",
+            "鱗屑": "角質細胞が板状に重なって剥がれかけている状態。乾癬などで見られます。",
+            "結痂": "血液や膿、浸出液が乾燥して固まったもの。「かさぶた」のこと。",
+            "膨疹": "真皮の一過性の浮腫（むくみ）により、皮膚が平たく盛り上がった状態。蕁麻疹に特徴的です。",
+            "アウスピッツ現象": "乾癬の鱗屑を無理に剥がすと、その下の真皮乳頭から点状の出血が見られる現象。",
+            "ケブネル現象": "乾癬などの疾患で、健康な皮膚を摩擦したり傷つけたりすると、そこに新たな病変ができる現象。",
+            "パッチテスト": "接触皮膚炎（かぶれ）の原因を調べる検査。疑わしい物質を専用のシールで48時間貼り、反応を見ます。",
+            "ダーモスコピー": "特殊な拡大鏡を使い、ホクロや腫瘍の内部構造を観察する痛みのない検査。",
+            "ニコルスキー現象": "一見正常な皮膚をこするだけで、簡単に表皮が剥がれて水疱ができる現象。天疱瘡などで見られます。",
+            "ヘリオトロープ疹": "皮膚筋炎で見られる、上まぶたが淡い紫色に腫れる特徴的な発疹。",
+            "レイノー現象": "寒さやストレスにより指先の血管が収縮し、色が白→紫→赤へと変化する現象。",
+            "不全型": "典型的な症状がすべて揃っていない状態。軽症や治療中の場合に見られます。",
+            "片側性": "体の中心を境に、片方の側だけに症状が現れること。帯状疱疹の大きな特徴です。",
+            "即時型アレルギー": "アレルゲンに接触後、数分から数時間以内に急激に起こる反応。アナフィラキシーなど。"
+        };
+
+        const quizData = [
+            {
+                q: "「湿疹」と診断されるための条件（多形性）について正しいものはどれですか？",
+                options: [
+                    { text: "赤み（紅斑）だけがずっと続く状態", isCorrect: false, rationale: "間違いです。湿疹は単一の症状ではなく、複数の形態が混在するのが特徴です。" },
+                    { text: "紅斑、丘疹、水疱などの多様な症状が混じり合っている状態", isCorrect: true, rationale: "正解です。湿疹は、紅斑、丘疹、水疱、びらん、結痂などが時間とともに変化し混在することを指します。" },
+                    { text: "かゆみが全くない状態", isCorrect: false, rationale: "間違いです。湿疹は強いかゆみを伴うことが診断上の大きなポイントです。" },
+                    { text: "1日で跡形もなく消える状態", isCorrect: false, rationale: "間違いです。それは「蕁麻疹」の特徴であり、湿疹はある程度の期間持続します。" }
+                ]
+            },
+            {
+                q: "接触皮膚炎（かぶれ）の原因を特定するために、専用のシールを貼って行う検査は何ですか？",
+                options: [
+                    { text: "血液検査（IgE）", isCorrect: false, rationale: "間違いです。血液検査はアレルギー体質はわかりますが、かぶれの直接原因の特定には不向きです。" },
+                    { text: "パッチテスト", isCorrect: true, rationale: "正解です。パッチテストは疑わしい原因物質を皮膚に貼り、48時間後の反応を確認する検査です。" },
+                    { text: "ダーモスコピー", isCorrect: false, rationale: "間違いです。ダーモスコピーは拡大鏡でホクロなどの構造を診る検査です。" },
+                    { text: "真菌検査", isCorrect: false, rationale: "間違いです。カビ（水虫）の有無を顕微鏡で診る検査です。" }
+                ]
+            },
+            {
+                q: "アトピー性皮膚炎の診断基準に含まれないものはどれですか？",
+                options: [
+                    { text: "強いかゆみがあること", isCorrect: false, rationale: "これは診断に必須の要素です。アトピー性皮膚炎は非常にかゆみが強い疾患です。" },
+                    { text: "特徴的な湿疹の分布（顔や関節の裏など）", isCorrect: false, rationale: "これは正しい診断基準です。年齢によって出やすい場所が決まっています。" },
+                    { text: "1週間以内に完治する経過", isCorrect: true, rationale: "これが正解（含まれない）です。アトピー性皮膚炎は慢性的・反復的（半年以上など）に続くことが条件です。" },
+                    { text: "アトピー素因（家族歴やアレルギー体質）", isCorrect: false, rationale: "これは診断をサポートする重要な要素の一つです。" }
+                ]
+            },
+            {
+                q: "蕁麻疹（じんましん）の特徴である「膨疹」について正しい説明はどれですか？",
+                options: [
+                    { text: "一度出ると数週間消えない盛り上がり", isCorrect: false, rationale: "間違いです。膨疹は短時間で消えるのが最大の特徴です。" },
+                    { text: "真皮の一過性の浮腫による盛り上がりで、数時間で消える", isCorrect: true, rationale: "正解です。膨疹は蕁麻疹特有の症状で、跡を残さず24時間以内に消えるのが通常です。" },
+                    { text: "膿が溜まって盛り上がった状態", isCorrect: false, rationale: "間違いです。膿が溜まったものは膿疱であり、蕁麻疹ではありません。" },
+                    { text: "皮が剥けてガサガサになった状態", isCorrect: false, rationale: "間違いです。皮が剥ける（落屑）のは慢性的な炎症の結果であり、蕁麻疹では見られません。" }
+                ]
+            },
+            {
+                q: "アナフィラキシー型薬疹について、緊急性が高い理由は何ですか？",
+                options: [
+                    { text: "足にかゆみが出るから", isCorrect: false, rationale: "間違いです。かゆみだけなら緊急性は高くありません。" },
+                    { text: "数分から数時間の即時型反応で、呼吸困難や血圧低下を伴うから", isCorrect: true, rationale: "正解です。即時型アレルギー反応により全身のショック症状を起こすため、命に関わります。" },
+                    { text: "皮膚が少し黒くなるから", isCorrect: false, rationale: "間違いです。色の変化（色素沈着）は緊急事態ではありません。" },
+                    { text: "お腹が空くから", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "重症薬疹（SJS/TEN）を疑う際に、皮膚以外で必ず確認すべき部位はどこですか？",
+                options: [
+                    { text: "髪の毛の太さ", isCorrect: false, rationale: "間違いです。" },
+                    { text: "口、目、外陰部などの粘膜の状態", isCorrect: true, rationale: "正解です。高熱とともに粘膜にひどいびらん（ただれ）が現れるのが、重症薬疹の重要なサインです。" },
+                    { text: "耳たぶの形", isCorrect: false, rationale: "間違いです。" },
+                    { text: "爪の伸びる速さ", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "乾癬（かんせん）において、フケのような白い皮を剥がすと出血する現象を何と言いますか？",
+                options: [
+                    { text: "ケブネル現象", isCorrect: false, rationale: "間違いです。ケブネル現象は「刺激した場所に新しく病変ができること」です。" },
+                    { text: "アウスピッツ現象", isCorrect: true, rationale: "正解です。鱗屑の下の真皮乳頭内の血管から点状に出血する、乾癬に特徴的な現象です。" },
+                    { text: "ニコルスキー現象", isCorrect: false, rationale: "間違いです。ニコルスキー現象は「こするだけで皮が剥けること」です。" },
+                    { text: "レイノー現象", isCorrect: false, rationale: "間違いです。レイノー現象は「寒さで指の色が変わること」です。" }
+                ]
+            },
+            {
+                q: "帯状疱疹の原因と特徴について、正しいものはどれですか？",
+                options: [
+                    { text: "水ぼうそうと同じウイルスによる、片側性の痛みと水疱", isCorrect: true, rationale: "正解です。神経に沿って片側性に症状が出て、強い痛みを伴うのが帯状疱疹の特徴です。" },
+                    { text: "他人の水虫からうつる、全身の乾燥", isCorrect: false, rationale: "間違いです。原因はカビではなく、体内に潜伏していたウイルスです。" },
+                    { text: "食べ物アレルギーによる、両側の赤い斑点", isCorrect: false, rationale: "間違いです。" },
+                    { text: "毎日お風呂に入らないことで起こる、細菌感染", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "水虫の原因菌である「白癬菌」はどの分類に属しますか？",
+                options: [
+                    { text: "ウイルス", isCorrect: false, rationale: "間違いです。ウイルスはイボやヘルペスの原因です。" },
+                    { text: "真菌（カビ）", isCorrect: true, rationale: "正解です。白癬菌は真菌の一種で、角質層のケラチンを栄養にして増殖します。" },
+                    { text: "細菌", isCorrect: false, rationale: "間違いです。細菌はとびひやニキビの原因です。" },
+                    { text: "ダニ", isCorrect: false, rationale: "間違いです。ダニ（ヒゼンダニ）は疥癬の原因です。" }
+                ]
+            },
+            {
+                q: "疥癬（かいせん）の「角化型（ノルウェー型）」が特に危険とされる理由は何ですか？",
+                options: [
+                    { text: "かゆみが全くないから", isCorrect: false, rationale: "間違いです。かゆみが少ないことはありますが、危険な理由は別にあります。" },
+                    { text: "ダニの数が数百万匹と非常に多く、感染力が極めて強いから", isCorrect: true, rationale: "正解です。通常の疥癬と違い、短時間の接触や衣服を通じても感染するため、隔離が必要です。" },
+                    { text: "見た目が綺麗だから", isCorrect: false, rationale: "間違いです。皮膚が厚くガサガサになり、鱗屑が大量に付着します。" },
+                    { text: "治るまで10年かかるから", isCorrect: false, rationale: "間違いです。適切な治療を行えば数週間から数か月で改善します。" }
+                ]
+            },
+            {
+                q: "単純ヘルペスの再発について正しい説明はどれですか？",
+                options: [
+                    { text: "一度治れば二度と再発しない", isCorrect: false, rationale: "間違いです。ウイルスが神経節に潜伏し続けるため、体調不良などを機に再発します。" },
+                    { text: "疲労や発熱、日光浴などをきっかけに、同じ場所に再発しやすい", isCorrect: true, rationale: "正解です。口唇や性器周囲など、同じ場所に小水疱がまとまって現れるのが特徴です。" },
+                    { text: "再発のたびに血液型が変わる", isCorrect: false, rationale: "間違いです。" },
+                    { text: "抗生物質の点滴をすれば完治する", isCorrect: false, rationale: "間違いです。ウイルスには抗ウイルス薬を使用します。" }
+                ]
+            },
+            {
+                q: "伝染性膿痂疹（とびひ）の予防と対応として正しいものはどれですか？",
+                options: [
+                    { text: "患部を掻き壊さないようにし、石鹸で優しく洗う", isCorrect: true, rationale: "正解です。細菌を減らすために洗浄し、他の部位への感染を防ぐために掻かないことが重要です。" },
+                    { text: "消毒液をたっぷり塗り、乾かさずに放置する", isCorrect: false, rationale: "間違いです。過度な消毒よりも洗浄と適切な軟膏処置が推奨されます。" },
+                    { text: "水ぶくれ（水疱）を自分で全て潰す", isCorrect: false, rationale: "間違いです。中の液体に菌が含まれているため、潰すと周囲に広がってしまいます。" },
+                    { text: "誰とでもタオルを共有する", isCorrect: false, rationale: "間違いです。タオルを介して他の人に感染します。" }
+                ]
+            },
+            {
+                q: "天疱瘡（てんぽうそう）などの重症水疱症で見られる、摩擦で皮が剥ける現象は？",
+                options: [
+                    { text: "アウスピッツ現象", isCorrect: false, rationale: "間違いです。乾癬の点状出血のことです。" },
+                    { text: "ニコルスキー現象", isCorrect: true, rationale: "正解です。表皮の細胞同士の結合が壊れているため、わずかな刺激でびらんを生じます。" },
+                    { text: "ケブネル現象", isCorrect: false, rationale: "間違いです。" },
+                    { text: "レイノー現象", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "悪性黒色腫（メラノーマ）を疑うサイン「ABCDルール」の「A」は何ですか？",
+                options: [
+                    { text: "Asymmetry（左右非対称）", isCorrect: true, rationale: "正解です。良性のホクロは左右対称に近いですが、メラノーマは形がいびつで非対称なことが多いです。" },
+                    { text: "Age（年齢）", isCorrect: false, rationale: "間違いです。" },
+                    { text: "Area（場所）", isCorrect: false, rationale: "間違いです。" },
+                    { text: "Apple（リンゴのような形）", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "基底細胞癌（きていさいぼうがん）の見た目の特徴として多いものは？",
+                options: [
+                    { text: "真っ白なカサカサした発疹", isCorrect: false, rationale: "間違いです。" },
+                    { text: "中心が凹み、周囲が黒い真珠状に盛り上がった結節", isCorrect: true, rationale: "正解です。顔面に多く、中心が潰瘍化して周囲が黒く縁取られるのが典型的です。" },
+                    { text: "全身に広がる真っ赤な斑点", isCorrect: false, rationale: "間違いです。" },
+                    { text: "毛がフサフサ生えているホクロ", isCorrect: false, rationale: "間違いです。毛が生えているものは通常、良性のことが多いです。" }
+                ]
+            },
+            {
+                q: "褥瘡（じょくそう）の予防において、最も優先すべき看護介入は何ですか？",
+                options: [
+                    { text: "栄養ドリンクをたくさん飲ませる", isCorrect: false, rationale: "間違いです。栄養も大事ですが、直接の予防策ではありません。" },
+                    { text: "定期的な体位変換と、除圧用具の使用", isCorrect: true, rationale: "正解です。持続的な圧迫を避けることが、褥瘡予防において最も重要です。" },
+                    { text: "毎日熱いお湯で患部をゴシゴシ洗う", isCorrect: false, rationale: "間違いです。皮膚のバリアを壊し、悪化させてしまいます。" },
+                    { text: "湿布を貼っておく", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "光線過敏症の患者指導として適切なものはどれですか？",
+                options: [
+                    { text: "できるだけ日光（紫外線）に当たらないように遮光する", isCorrect: true, rationale: "正解です。外出時の長袖、帽子、日焼け止めの使用などで紫外線を避けることが基本です。" },
+                    { text: "毎日1時間は日光浴をする", isCorrect: false, rationale: "間違いです。症状を悪化させてしまいます。" },
+                    { text: "強力な蛍光灯の真下にいる", isCorrect: false, rationale: "間違いです。一部の蛍光灯の光でも反応することがあります。" },
+                    { text: "海に行って肌を焼く", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "掌蹠膿疱症（しょうせきのうほうしょう）と関連が深いとされる生活習慣はどれですか？",
+                options: [
+                    { text: "甘いものの食べ過ぎ", isCorrect: false, rationale: "間違いです。" },
+                    { text: "喫煙（タバコ）", isCorrect: true, rationale: "正解です。掌蹠膿疱症患者の多くに喫煙歴があり、禁煙で症状が改善することがあります。" },
+                    { text: "睡眠時間の短さのみ", isCorrect: false, rationale: "間違いです。" },
+                    { text: "激しい運動", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "ニキビ（尋常性ざ瘡）の炎症が起こる主なプロセスはどれですか？",
+                options: [
+                    { text: "毛穴の詰まり → 皮脂の停滞 → アクネ菌の増殖", isCorrect: true, rationale: "正解です。皮脂が溜まった場所で菌が増え、炎症（赤ニキビ）へと進みます。" },
+                    { text: "肌の乾燥 → 血行不良 → 脱毛", isCorrect: false, rationale: "間違いです。ニキビの主な原因は乾燥ではなく皮脂と詰まりです。" },
+                    { text: "ウイルス感染 → 水疱 → かさぶた", isCorrect: false, rationale: "間違いです。ニキビはウイルス感染症ではありません。" },
+                    { text: "食べ過ぎ → 脂肪の沈着 → 腫瘍", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "皮膚疾患患者の看護で「ボディイメージの変化」への配慮が必要な理由は？",
+                options: [
+                    { text: "皮膚症状は目に見えるため、心理的苦痛や対人不安を招きやすいから", isCorrect: true, rationale: "正解です。外見の変化が自尊心の低下や社会生活の制限に繋がることが多いです。" },
+                    { text: "皮膚病は心臓病よりも痛いから", isCorrect: false, rationale: "間違いです。" },
+                    { text: "患者が鏡を見るのが好きだから", isCorrect: false, rationale: "間違いです。" },
+                    { text: "看護師が暇だから", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "紅皮症（こうひしょう）という重症な状態で見られる全身症状は？",
+                options: [
+                    { text: "微熱だけが出る", isCorrect: false, rationale: "間違いです。もっと深刻な症状が出ます。" },
+                    { text: "体温調節異常や蛋白喪失、脱水などの全身管理が必要な状態", isCorrect: true, rationale: "正解です。広範囲の皮膚が機能しなくなるため、全身状態が急激に悪化します。" },
+                    { text: "視力が良くなる", isCorrect: false, rationale: "間違いです。" },
+                    { text: "食欲が異常に増進する", isCorrect: false, rationale: "間違いです。むしろ全身倦怠感で食欲は低下します。" }
+                ]
+            },
+            {
+                q: "魚鱗癬（ぎょりんせん）のケアで最も大切なことは何ですか？",
+                options: [
+                    { text: "徹底した保湿と、バリア機能の補完", isCorrect: true, rationale: "正解です。角質層のバリアが極端に弱いため、保湿剤による外的なバリアが不可欠です。" },
+                    { text: "ウロコ状の皮を全て無理やり剥がす", isCorrect: false, rationale: "間違いです。無理に剥がすと皮膚を傷つけ、感染や炎症を招きます。" },
+                    { text: "毎日石鹸で3回洗う", isCorrect: false, rationale: "間違いです。必要な油分まで奪われ、乾燥が悪化します。" },
+                    { text: "冷たい風に当てて乾かす", isCorrect: false, rationale: "間違いです。乾燥を促してしまいます。" }
+                ]
+            },
+            {
+                q: "下腿（すね）に痛みを伴う赤いしこりができる「結節性紅斑」の原因として多いものは？",
+                options: [
+                    { text: "単純な運動不足", isCorrect: false, rationale: "間違いです。" },
+                    { text: "扁桃炎、薬剤、内臓疾患（サルコイドーシス等）への反応", isCorrect: true, rationale: "正解です。何らかの抗原刺激に対する過敏反応として、脂肪組織に炎症が起こります。" },
+                    { text: "靴下の締め付けすぎ", isCorrect: false, rationale: "間違いです。" },
+                    { text: "ビタミン不足のみ", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "皮膚筋炎で見られる、上まぶたの紫色の腫れを何と呼びますか？",
+                options: [
+                    { text: "ヘリオトロープ疹", isCorrect: true, rationale: "正解です。ヘリオトロープという花の色に似ていることから名付けられた、特徴的な症状です。" },
+                    { text: "蝶形紅斑", isCorrect: false, rationale: "間違いです。蝶形紅斑は頬に出るSLEの症状です。" },
+                    { text: "ニコルスキー現象", isCorrect: false, rationale: "間違いです。" },
+                    { text: "レイノー現象", isCorrect: false, rationale: "間違いです。指先の色変化のことです。" }
+                ]
+            },
+            {
+                q: "全身性エリテマトーデス（SLE）の患者が日常生活で特に注意すべきことは？",
+                options: [
+                    { text: "適度な運動", isCorrect: false, rationale: "間違いではありませんが、最も注意すべきなのは日光です。" },
+                    { text: "日光（紫外線）を避けること", isCorrect: true, rationale: "正解です。日光により皮膚症状が悪化したり、全身の病勢が強まったりするため、厳重な遮光が必要です。" },
+                    { text: "塩分を控えることのみ", isCorrect: false, rationale: "間違いです。" },
+                    { text: "毎日水を5リットル飲むこと", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "尋常性白斑（じんじょうせいはくはん）の治療法として教科書にあるものは？",
+                options: [
+                    { text: "ステロイド外用や光線療法（PUVA療法など）", isCorrect: true, rationale: "正解です。免疫反応を抑えたり、色素細胞を刺激したりする治療が行われます。" },
+                    { text: "黒いペンで塗る", isCorrect: false, rationale: "間違いです。それは一時的なカモフラージュ（メイク）であり治療ではありません。" },
+                    { text: "冷やして固める", isCorrect: false, rationale: "間違いです。" },
+                    { text: "手術で皮膚をすべて取り替える", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "ダーモスコピー検査のメリットは何ですか？",
+                options: [
+                    { text: "皮膚を切らずに、ホクロの良悪性を高精度で推測できる", isCorrect: true, rationale: "正解です。非侵襲的（体を傷つけない）でありながら、多くの情報を得られる画期的な検査です。" },
+                    { text: "血液型がわかる", isCorrect: false, rationale: "間違いです。" },
+                    { text: "IQがわかる", isCorrect: false, rationale: "間違いです。" },
+                    { text: "一生病気にならない体が手に入る", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "「かゆみ」が患者に与える影響で、最もQOLを低下させるものは？",
+                options: [
+                    { text: "眠気が増えること", isCorrect: false, rationale: "間違いです。" },
+                    { text: "不眠、精神的ストレス、掻破による皮膚バリアの破壊", isCorrect: true, rationale: "正解です。かゆみは痛み以上に我慢が難しく、悪循環（イッチ・スクラッチ・サイクル）に陥りやすいです。" },
+                    { text: "指の力が強くなること", isCorrect: false, rationale: "間違いです。" },
+                    { text: "お風呂が楽しくなること", isCorrect: false, rationale: "間違いです。温まるとかゆみが強まるため、逆にお風呂が辛くなることが多いです。" }
+                ]
+            },
+            {
+                q: "ステロイド外用薬を塗る際の適切な量（FTU：フィンガーチップユニット）とは？",
+                options: [
+                    { text: "人差し指の先から第一関節まで出した量で、大人の手のひら2枚分に塗る", isCorrect: true, rationale: "正解です。これが外用薬の適切な量の目安（約0.5g）とされています。" },
+                    { text: "チューブ1本を使い切る", isCorrect: false, rationale: "間違いです。多すぎます。" },
+                    { text: "透明に見えなくなるまで厚く塗る", isCorrect: false, rationale: "間違いです。適切な量で薄く均一に広げるのが基本です。" },
+                    { text: "米粒1個分を全身に広げる", isCorrect: false, rationale: "間違いです。少なすぎて効果が出ません。" }
+                ]
+            },
+            {
+                q: "最後に、皮膚科クリニックで働く上で大切な姿勢はどれですか？",
+                options: [
+                    { text: "病気だけを見て、患者の不安は無視する", isCorrect: false, rationale: "間違いです。" },
+                    { text: "疾患の知識を持ちつつ、患者の不安や生活背景に寄り添う", isCorrect: true, rationale: "正解です。皮膚科は生活の質に直結する分野であるため、全人的な関わりが求められます。" },
+                    { text: "とにかく早く診察を回すことだけを考える", isCorrect: false, rationale: "間違いです。効率も大事ですが、質が最も重要です。" },
+                    { text: "専門用語を難しく使って患者を圧倒する", isCorrect: false, rationale: "間違いです。患者さんにわかりやすく伝えることがプロの仕事です。" }
+                ]
+            }
+        ];
+
+        const quiz = {
+            currentIdx: 0,
+            score: 0,
+            userAnswers: new Array(quizData.length).fill(null),
+            scoredQuestions: new Set(),
+            
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                this.render();
+            },
+            
+            render() {
+                const q = quizData[this.currentIdx];
+                document.getElementById('progress-text').innerText = `Question ${this.currentIdx + 1} / ${quizData.length}`;
+                document.getElementById('progress-bar').style.width = `${((this.currentIdx + 1) / quizData.length) * 100}%`;
+                
+                const prevBtn = document.getElementById('global-prev-btn');
+                if (this.currentIdx > 0) prevBtn.classList.remove('invisible');
+                else prevBtn.classList.add('invisible');
+                
+                document.getElementById('question-text').innerText = q.q;
+                
+                const optionsDiv = document.getElementById('options');
+                optionsDiv.innerHTML = '';
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all duration-200 font-medium text-sm sm:text-base shadow-sm";
+                    btn.innerText = `${i + 1}. ${opt.text}`;
+                    btn.onclick = () => this.showRationale(i);
+                    optionsDiv.appendChild(btn);
+                });
+                
+                document.getElementById('explanation-box').classList.add('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+                
+                if (this.userAnswers[this.currentIdx] !== null) {
+                    this.showRationale(this.userAnswers[this.currentIdx], true);
+                }
+            },
+            
+            showRationale(idx, isReview = false) {
+                const q = quizData[this.currentIdx];
+                const opt = q.options[idx];
+                const expBox = document.getElementById('explanation-box');
+                const header = document.getElementById('feedback-header');
+                const icon = document.getElementById('status-icon');
+                const statusText = document.getElementById('status-text');
+                const rationaleElem = document.getElementById('rationale-text');
+                const nextBtn = document.getElementById('next-btn');
+                const buttons = document.querySelectorAll('#options button');
+
+                if (!isReview && !this.scoredQuestions.has(this.currentIdx)) {
+                    this.userAnswers[this.currentIdx] = idx;
+                    if (opt.isCorrect) this.score++;
+                    this.scoredQuestions.add(this.currentIdx);
+                } else if (!isReview) {
+                    this.userAnswers[this.currentIdx] = idx;
+                }
+
+                buttons.forEach((btn, i) => {
+                    btn.classList.remove('correct-btn', 'wrong-btn', 'ring-2', 'ring-indigo-500', 'neutral-btn');
+                    if (q.options[i].isCorrect) btn.classList.add('correct-btn');
+                    else btn.classList.add('neutral-btn');
+                });
+                
+                if (!opt.isCorrect) {
+                    buttons[idx].classList.remove('neutral-btn');
+                    buttons[idx].classList.add('wrong-btn');
+                    icon.innerText = "❌ 不正解の解説";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-red-600";
+                } else {
+                    icon.innerText = "✅ 正解のポイント";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-green-600";
+                }
+                
+                buttons[idx].classList.add('ring-2', 'ring-indigo-500');
+                
+                // 用語リンクの埋め込み処理
+                let rationaleHtml = opt.rationale;
+                Object.keys(glossary).forEach(term => {
+                    const regex = new RegExp(term, 'g');
+                    rationaleHtml = rationaleHtml.replace(regex, `<span class="glossary-term" onclick="openGlossary('${term}')">${term}</span>`);
+                });
+                rationaleElem.innerHTML = rationaleHtml;
+
+                expBox.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                
+                if (!isReview) {
+                    setTimeout(() => {
+                        expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }
+            },
+            
+            next() {
+                this.currentIdx++;
+                if(this.currentIdx < quizData.length) {
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    this.showResult();
+                }
+            },
+
+            prev() {
+                if (this.currentIdx > 0) {
+                    this.currentIdx--;
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+            
+            showResult() {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('score-display').innerText = this.score;
+                
+                let msg = "";
+                if(this.score === 30) msg = "素晴らしい！臨床知識も専門用語も完璧ですね。スタッフリーダーとして活躍を期待しています！";
+                else if(this.score >= 25) msg = "高得点です！多くの疾患の特徴を正しく理解できています。";
+                else if(this.score >= 20) msg = "合格点です。代表的な疾患のキーワードをもう一度復習して定着させましょう。";
+                else msg = "お疲れ様でした。まずはよくある「水虫」「帯状疱疹」「蕁麻疹」などの基本疾患から解説を読み直してみましょう。";
+                
+                document.getElementById('result-message').innerText = msg;
+            }
+        };
+
+        function openGlossary(term) {
+            document.getElementById('glossary-title').innerText = term;
+            document.getElementById('glossary-body').innerText = glossary[term];
+            document.getElementById('glossary-modal').classList.remove('hidden');
+        }
+
+        function closeGlossary() {
+            document.getElementById('glossary-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+```

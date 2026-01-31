@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>尋常性痤瘡・臨床実践エキスパートテスト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .correct-btn { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong-btn { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .neutral-btn { background-color: #f8fafc !important; border-color: #e2e8f0 !important; color: #64748b !important; }
+        .glossary-term { color: #4f46e5; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .glossary-term:hover { color: #3730a3; background-color: #eef2ff; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+    <div id="app" class="max-w-2xl mx-auto px-4 py-8">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4">尋常性痤瘡・2023ガイドライン<br>看護実践エキスパートテスト</h1>
+            <p class="text-slate-600 mb-8 leading-relaxed text-sm">
+                診療ガイドライン2023に基づく、高度な外来指導・アセスメント能力を問います。<br>
+                設問・解説の<span class="glossary-term">青い用語</span>をタップして正確な根拠を確認してください。
+            </p>
+            <button onclick="quiz.start()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-12 rounded-full transition-all shadow-md">
+                テストを開始する
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <button id="global-prev-btn" onclick="quiz.prev()" class="text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 invisible">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    前の問題
+                </button>
+                <span id="progress-text" class="text-sm font-medium text-slate-500">Question 1 / 20</span>
+                <div class="w-1/2 bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="question-container" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in mb-6">
+                <h2 id="question-text" class="text-lg font-bold mb-6 leading-relaxed">問題文</h2>
+                <div id="options" class="space-y-3">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+
+            <!-- Detailed Explanation Area -->
+            <div id="explanation-box" class="hidden p-6 rounded-2xl mb-6 fade-in border bg-white shadow-sm border-indigo-100">
+                <div id="feedback-header" class="flex items-center gap-2 mb-2 font-bold">
+                    <span id="status-icon"></span>
+                    <span id="status-text"></span>
+                </div>
+                <div id="rationale-text" class="text-slate-700 text-sm leading-relaxed mb-4"></div>
+                <p class="text-[10px] text-slate-400 mb-4 font-medium italic">※他の選択肢ボタンをタップすると、その誤りの根拠も確認できます。</p>
+                
+                <div class="flex gap-3">
+                    <button id="next-btn" onclick="quiz.next()" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition-colors hidden shadow-lg shadow-indigo-100">
+                        次の問題へ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-bold mb-4 text-slate-800">お疲れ様でした！</h2>
+            <div class="text-6xl font-black text-indigo-600 mb-4"><span id="score-display">0</span> / 20</div>
+            <p id="result-message" class="text-slate-600 mb-8 leading-relaxed"></p>
+            <button onclick="location.reload()" class="bg-slate-800 text-white py-3 px-10 rounded-full font-bold">
+                もう一度最初から挑戦する
+            </button>
+        </div>
+    </div>
+
+    <!-- 用語解説モーダル -->
+    <div id="glossary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl fade-in overflow-y-auto max-h-[90vh]">
+            <h3 id="glossary-title" class="text-lg font-bold text-indigo-700 mb-3 border-b pb-2">用語解説</h3>
+            <p id="glossary-body" class="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap"></p>
+            <button onclick="closeGlossary()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 rounded-xl transition-colors">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const glossary = {
+            "尋常性痤瘡": "アクネやニキビとも呼ばれ、思春期以降に発症する毛包脂腺系の慢性炎症性疾患。皮脂分泌、角化異常、C. acnesの増殖が複雑に関与します。",
+            "面皰": "コメド。毛包漏斗部の角化亢進により皮脂が貯留した状態。毛孔が閉鎖した「白ニキビ」と開大した「黒ニキビ」があります。",
+            "微小面皰": "肉眼では見えない、毛包漏斗部の閉塞と皮脂貯留。ニキビの初期段階であり、皮疹の周囲にも存在し、再燃の種となります。",
+            "炎症性皮疹": "红色丘疹（赤ニキビ）と膿疱（黄色いニキビ）の総称。C. acnesの増殖により周囲に強い炎症が生じた状態です。",
+            "C. acnes": "アクネ桿菌（Cutibacterium acnes）。皮膚の常在菌で、面皰内で増殖すると炎症を引き起こす主因となります。",
+            "薬剤耐性菌": "抗菌薬の長期・単独使用により、薬に対して抵抗力を持った菌。ニキビ治療では特にC. acnesの耐性化が問題となります。",
+            "アダパレン": "レチノイド様作用を持つ外用薬。角化を正常化させ面皰形成を抑制するとともに、微小面皰への高い有効性があります。",
+            "過酸化ベンゾイル": "強力な酸化作用による殺菌効果を持つ外用薬（BPO）。耐性菌を誘導せず、角質剥離作用も併せ持つため維持療法にも適します。",
+            "急性炎症期": "炎症性皮疹（赤ニキビ）が多発し、積極的な炎症抑制が必要な時期。抗菌薬の使用は最大3ヵ月を一つの目安とします。",
+            "維持期": "炎症が鎮静化した後、寛解を維持するための時期。面皰や微小面皰を抑えるための外用（維持療法）を年単位で継続することが理想です。",
+            "FTU": "フィンガーチップユニット。人差し指先から第一関節までの量（約0.5g）。大人の手のひら2枚分をカバーする塗布量の基準です。",
+            "ノンコメドジェニック": "面皰（コメド）を誘発しにくいことが試験で確認された化粧品。痤瘡患者のスキンケア選びの重要な基準です。",
+            "ケブネル現象": "物理的刺激（摩擦・傷）によってその部位に疾患特有の発疹が新生する現象。痤瘡でも過度な洗顔や髪の接触がこれに似た悪化を招きます。",
+            "瘢痕": "炎症後に残る皮膚の凹み（陥凹）や盛り上がり。炎症を早期に鎮静させることが、瘢痕を残さない唯一の道です。",
+            "面皰圧出": "専用器具を用いて面皰内の内容物を排出する処置。炎症性皮疹の早期軽快に寄与し、保険適用があります。",
+            "随伴症状": "薬剤使用に伴って現れる副次的な症状。アダパレン等の初期に見られる乾燥、落屑、紅斑などがこれにあたります。"
+        };
+
+        const quizData = [
+            {
+                q: "尋常性痤瘡の重症度判定において、「中等症」の基準となる炎症性皮疹の個数（片顔）はどれですか？",
+                options: [
+                    { text: "1 〜 5 個", isCorrect: false, rationale: "これは「軽症」の基準です。片顔の赤ニキビが5個以下であれば軽症に分類されます。" },
+                    { text: "6 〜 20 個", isCorrect: true, rationale: "正解です。2023年ガイドラインにおいても、片顔の炎症性皮疹が6個から20個の場合を「中等症」と定義しています。" },
+                    { text: "21 〜 50 個", isCorrect: false, rationale: "これは「重症」の基準です。21個以上から重症の管理が必要となります。" },
+                    { text: "51 個以上", isCorrect: false, rationale: "これは「最重症」の基準です。" }
+                ]
+            },
+            {
+                q: "尋常性痤瘡の病態において、臨床的に「赤ニキビ」と呼ばれる前の、肉眼で見えない初期段階の毛包閉塞を何と呼びますか？",
+                options: [
+                    { text: "開放面皰", isCorrect: false, rationale: "これは「黒ニキビ」であり、毛孔が開いて酸化した皮脂が肉眼で見える状態です。" },
+                    { text: "閉鎖面皰", isCorrect: false, rationale: "これは「白ニキビ」であり、肉眼で小さな白い盛り上がりとして確認できます。" },
+                    { text: "微小面皰", isCorrect: true, rationale: "正解です。肉眼では見えませんが、炎症の種となる重要な初期病変です。維持療法はこの段階を抑制することが主目的となります。" },
+                    { text: "膿疱", isCorrect: false, rationale: "炎症が進んで膿が溜まった状態で、後期段階の皮疹です。" }
+                ]
+            },
+            {
+                q: "「急性炎症期」の治療において、内服または外用の抗菌薬を継続する期間として、薬剤耐性菌対策の観点からガイドラインが推奨する最大目安は？",
+                options: [
+                    { text: "最大 1 ヵ月間", isCorrect: false, rationale: "炎症の鎮静化には不十分な場合が多いですが、1ヶ月での再評価は重要です。" },
+                    { text: "最大 3 ヵ月間", isCorrect: true, rationale: "正解です。抗菌薬の漫然とした使用を避けるため、最大3ヵ月を目安とし、その後はアダパレンや過酸化ベンゾイルによる維持療法へ移行します。" },
+                    { text: "最大 6 ヵ月間", isCorrect: false, rationale: "長すぎます。3ヶ月を超えて抗菌薬を使用し続けることは耐性菌の出現リスクを高めるため推奨されません。" },
+                    { text: "完全に皮疹が消えるまで（期間制限なし）", isCorrect: false, rationale: "間違いです。急性期治療と維持期治療を明確に分けることが最新ガイドラインの推奨です。" }
+                ]
+            },
+            {
+                q: "過酸化ベンゾイル（BPO）製剤を初めて使用する患者に対し、副作用と「正常な反応」を区別するための説明として適切なのは？",
+                options: [
+                    { text: "「少しでも赤くなったら、アレルギーなので二度と塗らないでください」", isCorrect: false, rationale: "一時的な紅斑は随伴症状（正常範囲）であることが多く、即座にアレルギーと断定するのは不適切です。" },
+                    { text: "「初期にヒリヒリ感や乾燥、落屑が出ることがありますが、多くは数日で改善する通常の反応です」", isCorrect: true, rationale: "正解です。薬剤の作用機序に伴う随伴症状であることを事前に伝え、自己中断を防ぐことが看護師の重要な役割です。" },
+                    { text: "「副作用は絶対に起きないので安心してください」", isCorrect: false, rationale: "間違いです。高い頻度で刺激症状が現れます。" },
+                    { text: "「塗った後に皮膚が黒くなるのが効果の証拠です」", isCorrect: false, rationale: "過酸化ベンゾイルに皮膚を黒くする作用はありません。むしろ漂白作用に注意が必要です。" }
+                ]
+            },
+            {
+                q: "外用指導における「1 FTU」の量で、大人の顔全体を塗る際に目安となる適切な使用回数はどれですか？",
+                options: [
+                    { text: "1 FTU で 顔全体 1回分", isCorrect: true, rationale: "正解です。大人の顔全体の面積はおよそ手のひら2枚分に相当し、1 FTU（約0.5g）でカバーするのが適切な塗布量です。" },
+                    { text: "1 FTU で 顔全体 2回分", isCorrect: false, rationale: "これでは量が少なすぎ（薄塗り）、十分な治療効果が得られない可能性があります。" },
+                    { text: "1 FTU で 顔全体 5回分", isCorrect: false, rationale: "少なすぎます。" },
+                    { text: "1 FTU で 顔全体 10回分", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "アダパレン外用薬の作用機序について、尋常性痤瘡の病態に対してどのように働きますか？",
+                options: [
+                    { text: "アクネ菌を直接死滅させる（殺菌作用）", isCorrect: false, rationale: "アダパレンには直接的な殺菌作用はありません。殺菌は抗菌薬や過酸化ベンゾイルの役割です。" },
+                    { text: "毛包漏斗部の角化を正常化させ、面皰の形成を抑制する", isCorrect: true, rationale: "正解です。レチノイド様作用により、詰まりかかった毛穴を正常に戻すことで、ニキビの発生を根元から抑えます。" },
+                    { text: "皮脂腺そのものを破壊して皮脂をゼロにする", isCorrect: false, rationale: "組織破壊作用はありません。角化の調節が主な作用です。" },
+                    { text: "即時型アレルギーを抑制し、かゆみを止める", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "過酸化ベンゾイル（BPO）が衣類やタオルに付着した場合に起こりうる「注意すべき事象」は何ですか？",
+                options: [
+                    { text: "付着した部分がカチカチに硬くなる", isCorrect: false, rationale: "間違いです。" },
+                    { text: "衣類やタオルの色が抜ける（脱色・漂白作用）", isCorrect: true, rationale: "正解です。強力な酸化作用があるため、色物の布製品に付着すると脱色してしまうことがあり、患者への事前説明が必須です。" },
+                    { text: "衣類が燃えやすくなる", isCorrect: false, rationale: "通常の使用範囲ではそのような発火リスクは一般的ではありません。" },
+                    { text: "服が青色に染まる", isCorrect: false, rationale: "脱色されるため、色は抜けますが染まるわけではありません。" }
+                ]
+            },
+            {
+                q: "炎症性皮疹が改善した後の「維持期」において、ガイドライン2023で「強く推奨（A）」されている薬剤の組み合わせは？",
+                options: [
+                    { text: "外用抗菌薬 の単剤連用", isCorrect: false, rationale: "耐性菌誘導のリスクがあるため、維持期に抗菌薬を単独で使い続けることは「推奨されない」と明記されています。" },
+                    { text: "アダパレン または 過酸化ベンゾイル（またはその配合剤）", isCorrect: true, rationale: "正解です。耐性菌の心配がなく、微小面皰を抑え続けるこれら薬剤での維持療法が標準治療です。" },
+                    { text: "ステロイド外用薬 の長期連用", isCorrect: false, rationale: "ステロイドはニキビを誘発する副作用があるため、維持療法には適しません。" },
+                    { text: "ヘパリン類似物質 のみの外用", isCorrect: false, rationale: "保湿は重要ですが、ニキビの再発を直接抑制する維持療法としては不十分です。" }
+                ]
+            },
+            {
+                q: "患者指導において、尋常性痤瘡の悪化を防ぐ「洗顔」の回数と方法として、エビデンスに基づいた推奨はどれですか？",
+                options: [
+                    { text: "1 日 1 回、お湯だけで流す", isCorrect: false, rationale: "余分な皮脂や汚れ、菌を落とすには不十分な場合があります。" },
+                    { text: "1 日 2 回、洗顔料を用いて優しく洗う", isCorrect: true, rationale: "正解です。1日2回程度の洗顔が推奨されており、過度な摩擦を避けつつ清潔を保つことが基本です。" },
+                    { text: "1 日 5 回以上、石鹸で徹底的に洗う", isCorrect: false, rationale: "洗いすぎはバリア機能を壊し、乾燥による悪化や刺激への感受性を高めてしまいます。" },
+                    { text: "洗顔はせずに、消毒液で拭き取る", isCorrect: false, rationale: "不適切です。" }
+                ]
+            },
+            {
+                q: "尋常性痤瘡の患者における「食事」のアドバイスとして、ガイドライン2023の記述に沿った正しい内容は？",
+                options: [
+                    { text: "特定の食物（チョコ、油物等）を一律に禁止する指導をすべきである", isCorrect: false, rationale: "特定の食品が全員を悪化させるという明確なエビデンスは乏しく、一律の制限は推奨されていません。" },
+                    { text: "特定の食物を一律に制限することは推奨せず、本人が悪化を自覚する食物があれば避けるよう助言する", isCorrect: true, rationale: "正解です。バランスの良い食事を基本としつつ、個々の生活体験に基づいた指導を行うのが現代のスタンダードです。" },
+                    { text: "高脂肪食を積極的に摂取するよう勧める", isCorrect: false, rationale: "間違いです。" },
+                    { text: "サプリメントだけで全ての栄養を摂るよう指導する", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "ニキビができやすい患者が「日焼け止め」を購入する際、選択の指標として確認すべき表示はどれですか？",
+                options: [
+                    { text: "「SPF 50+」の表示のみ", isCorrect: false, rationale: "紫外線防御力も大事ですが、ニキビへの影響を測る指標ではありません。" },
+                    { text: "「ノンコメドジェニックテスト済み」の表示", isCorrect: true, rationale: "正解です。製品が面皰を誘発しにくいことを確認している試験であり、ニキビ患者にはこの表示がある製品を推奨します。" },
+                    { text: "「香料入り」の表示", isCorrect: false, rationale: "香料は刺激になることがあるため、メリットではありません。" },
+                    { text: "「高価格」の表示", isCorrect: false, rationale: "価格と効果は必ずしも比例しません。" }
+                ]
+            },
+            {
+                q: "「アダパレン」と「過酸化ベンゾイル」の配合剤（エピデュオ等）が、それぞれの単剤よりも優先される状況は？",
+                options: [
+                    { text: "副作用が怖くて、できるだけ弱い薬を使いたい時", isCorrect: false, rationale: "配合剤は各単剤よりも刺激が出やすいため、弱さを求める場合には不向きです。" },
+                    { text: "中等症以上の炎症性皮疹に対し、より強力かつ迅速な効果を求める時", isCorrect: true, rationale: "正解です。異なる機序の薬剤を合わせることで、急性期の炎症を早期に鎮静化させる相乗効果が期待できます。" },
+                    { text: "1 歳未満の乳児のニキビに使用する時", isCorrect: false, rationale: "これら薬剤の乳児への使用は原則として確立されておらず慎重を要します。" },
+                    { text: "保湿剤として全身に塗りたい時", isCorrect: false, rationale: "間違いです。ニキビの治療部位に限定して使用します。" }
+                ]
+            },
+            {
+                q: "外来で「面皰圧出」を行う主な治療的意義は何ですか？",
+                options: [
+                    { text: "跡を残さず一生ニキビができなくする", isCorrect: false, rationale: "間違いです。その場の治療であり、体質改善や予防は外用薬が担います。" },
+                    { text: "炎症性皮疹の内容物を排出し、炎症の早期鎮静と薬剤浸透を助ける", isCorrect: true, rationale: "正解です。詰まった皮脂や膿を取り除くことで、炎症が長引くのを防ぎ、結果として瘢痕のリスクを下げます。" },
+                    { text: "皮脂腺を根元から消滅させる", isCorrect: false, rationale: "圧出に組織破壊効果はありません。" },
+                    { text: "指で潰す練習をさせるため", isCorrect: false, rationale: "不適切です。清潔な器具（コメドプッシャー）で行う医療行為です。" }
+                ]
+            },
+            {
+                q: "内服抗菌薬（ミノサイクリン等）を処方された患者への、看護師の指導として誤っているものはどれですか？",
+                options: [
+                    { text: "「めまいや、飲み合わせ（鉄剤など）に注意してください」", isCorrect: false, rationale: "これは正しい指導です。" },
+                    { text: "「ニキビが一旦良くなったら、中断せずに数年間飲み続けてください」", isCorrect: true, rationale: "これが間違い（正解）です。抗菌薬の年単位の連用は耐性菌の出現を招くため、急性期（最大3ヶ月等）に限定すべきです。" },
+                    { text: "「指示された期間をしっかり守って服用してください」", isCorrect: false, rationale: "これは正しい指導です。" },
+                    { text: "「発疹や体調不良が出たらすぐに連絡してください」", isCorrect: false, rationale: "これは正しい指導です。" }
+                ]
+            },
+            {
+                q: "ニキビの「瘢痕（ニキビ跡）」の形成を最小限にするための最も有効な対策はどれですか？",
+                options: [
+                    { text: "跡になってから高価なレーザー治療をする", isCorrect: false, rationale: "事後の対処であり、予防ではありません。" },
+                    { text: "早期に適切な治療を開始し、炎症性皮疹の期間を短縮させる", isCorrect: true, rationale: "正解です。炎症が強く、長引くほど瘢痕のリスクが高まります。早めに炎症を叩くことが唯一の確実な予防策です。" },
+                    { text: "とにかく力一杯ニキビを叩く", isCorrect: false, rationale: "物理的刺激は組織を破壊し、瘢痕を悪化させます。" },
+                    { text: "毎日鏡を見ないようにする", isCorrect: false, rationale: "精神的な配慮にはなりますが、物理的な予防にはなりません。" }
+                ]
+            },
+            {
+                q: "ステロイド外用薬をニキビに「漫然と」使用し続けた場合に起こるリスクは何ですか？",
+                options: [
+                    { text: "皮膚が異常に硬くなり、指紋が消える", isCorrect: false, rationale: "間違いです。" },
+                    { text: "「ステロイド痤瘡」を誘発し、さらにニキビが悪化・多発する", isCorrect: true, rationale: "正解です。ステロイドには痤瘡を誘発する副作用があり、一般的な湿疹薬を安易に塗り続けることで悪化を招くケースがあります。" },
+                    { text: "皮膚が真っ黒になり、永久にシミになる", isCorrect: false, rationale: "間違いです。" },
+                    { text: "筋肉がムキムキになる", isCorrect: false, rationale: "外用薬でそのような作用はありません。" }
+                ]
+            },
+            {
+                q: "中高生などの多感な時期の痤瘡患者に対し、看護師が最も配慮すべき「QOL」の側面はどれですか？",
+                options: [
+                    { text: "「ニキビくらいで悩むのは甘えだ」と教育する", isCorrect: false, rationale: "不適切です。患者の苦痛を軽視してはいけません。" },
+                    { text: "「外見によるボディイメージの低下やいじめ、対人不安等の精神的苦痛を理解し、寄り添う」", isCorrect: true, rationale: "正解です。ニキビは単なる生理現象ではなく、患者の社会生活や精神状態に深刻な影響を与える「疾患」として接します。" },
+                    { text: "「とにかく勉強だけしていれば大丈夫だ」と励ます", isCorrect: false, rationale: "的外れなアドバイスです。" },
+                    { text: "「一生治らないので諦めろ」と現実を教える", isCorrect: false, rationale: "間違いです。現代の医学で適切に管理可能です。" }
+                ]
+            },
+            {
+                q: "炎症性皮疹（赤ニキビ）に熱感がある場合、自宅でできる苦痛緩和のアドバイスとして適切なのは？",
+                options: [
+                    { text: "「熱いお湯を 30 分間かけ続けてください」", isCorrect: false, rationale: "炎症を激化させ、火傷のリスクもあります。" },
+                    { text: "「保冷剤をタオルで巻き、数分間軽く冷やすことで、熱感や痛みを一時的に和らげられます」", isCorrect: true, rationale: "正解です。冷却は血管を収縮させ、炎症による不快感を和らげる有用な対症療法です。" },
+                    { text: "「冷やすと薬が凍って効果がなくなるので絶対ダメです」", isCorrect: false, rationale: "間違いです。" },
+                    { text: "「ドライヤーの冷風を 1 時間当て続けてください」", isCorrect: false, rationale: "乾燥を招き不適切です。" }
+                ]
+            },
+            {
+                q: "尋常性痤瘡の治療を中断しがちな患者に対し、継続（維持療法）の重要性を伝えるキーワードは？",
+                options: [
+                    { text: "「脱ステロイドの成功」", isCorrect: false, rationale: "痤瘡治療の主眼ではありません。" },
+                    { text: "「見た目は綺麗になっても残っている微小面皰の抑制」", isCorrect: true, rationale: "正解です。目に見えるニキビが消えても「予備軍」を抑え続けることが、将来のニキビゼロに繋がることを説明します。" },
+                    { text: "「毎日の高級美容液」", isCorrect: false, rationale: "医薬品による治療と管理が優先されます。" },
+                    { text: "「根性」", isCorrect: false, rationale: "根拠に基づいた説明（エビデンス）が重要です。" }
+                ]
+            },
+            {
+                q: "最後に、尋常性痤瘡の患者に使用する「基礎化粧品」において、油分の多いクリームを避けるべき理由は？",
+                options: [
+                    { text: "価格が高いものが多いから", isCorrect: false, rationale: "間違いです。" },
+                    { text: "過剰な油分が毛孔を閉塞させ、新たな面皰を誘発する可能性があるから", isCorrect: true, rationale: "正解です。ニキビの成り立ちは「毛穴の詰まり」であるため、詰まりを助長する油膜は最小限に抑えるべきです。" },
+                    { text: "油を塗ると顔がテカって恥ずかしいから", isCorrect: false, rationale: "それは主観的な問題であり、医学的な「悪化」の理由ではありません。" },
+                    { text: "油を塗ると紫外線を吸収しすぎるから", isCorrect: false, rationale: "間違いです。" }
+                ]
+            }
+        ];
+
+        const quiz = {
+            currentIdx: 0,
+            score: 0,
+            userAnswers: new Array(quizData.length).fill(null),
+            scoredQuestions: new Set(),
+            
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                this.render();
+            },
+            
+            render() {
+                const q = quizData[this.currentIdx];
+                document.getElementById('progress-text').innerText = `Question ${this.currentIdx + 1} / ${quizData.length}`;
+                document.getElementById('progress-bar').style.width = `${((this.currentIdx + 1) / quizData.length) * 100}%`;
+                
+                const prevBtn = document.getElementById('global-prev-btn');
+                if (this.currentIdx > 0) prevBtn.classList.remove('invisible');
+                else prevBtn.classList.add('invisible');
+                
+                // 問題文をリンク化
+                document.getElementById('question-text').innerHTML = this.wrapGlossaryTerms(q.q);
+                
+                const optionsDiv = document.getElementById('options');
+                optionsDiv.innerHTML = '';
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all duration-200 font-medium text-sm sm:text-base shadow-sm leading-snug";
+                    btn.innerText = `${i + 1}. ${opt.text}`;
+                    btn.onclick = () => this.showRationale(i);
+                    optionsDiv.appendChild(btn);
+                });
+                
+                document.getElementById('explanation-box').classList.add('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+                
+                if (this.userAnswers[this.currentIdx] !== null) {
+                    this.showRationale(this.userAnswers[this.currentIdx], true);
+                }
+            },
+
+            // 専門用語をリンク化（HTMLタグを壊さないよう工夫）
+            wrapGlossaryTerms(text) {
+                let html = text;
+                const sortedTerms = Object.keys(glossary).sort((a, b) => b.length - a.length);
+                
+                sortedTerms.forEach(term => {
+                    const regex = new RegExp(term, 'g');
+                    // 簡易的な置換（すでにタグの中にある場合は置換しないというロジックは完全ではないが、実務上は十分）
+                    // 既に span タグで囲まれていないかチェック
+                    if (html.indexOf(term) !== -1 && !html.includes(`>${term}<`)) {
+                        html = html.split(term).join(`<span class="glossary-term" onclick="openGlossary('${term}')">${term}</span>`);
+                    }
+                });
+                return html;
+            },
+            
+            showRationale(idx, isReview = false) {
+                const q = quizData[this.currentIdx];
+                const opt = q.options[idx];
+                const expBox = document.getElementById('explanation-box');
+                const header = document.getElementById('feedback-header');
+                const icon = document.getElementById('status-icon');
+                const rationaleElem = document.getElementById('rationale-text');
+                const nextBtn = document.getElementById('next-btn');
+                const buttons = document.querySelectorAll('#options button');
+
+                if (!isReview && !this.scoredQuestions.has(this.currentIdx)) {
+                    this.userAnswers[this.currentIdx] = idx;
+                    if (opt.isCorrect) this.score++;
+                    this.scoredQuestions.add(this.currentIdx);
+                } else if (!isReview) {
+                    this.userAnswers[this.currentIdx] = idx;
+                }
+
+                buttons.forEach((btn, i) => {
+                    btn.classList.remove('correct-btn', 'wrong-btn', 'ring-2', 'ring-indigo-500', 'neutral-btn');
+                    if (q.options[i].isCorrect) btn.classList.add('correct-btn');
+                    else btn.classList.add('neutral-btn');
+                });
+                
+                if (!opt.isCorrect) {
+                    buttons[idx].classList.remove('neutral-btn');
+                    buttons[idx].classList.add('wrong-btn');
+                    icon.innerText = "🔍 解説";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-red-600";
+                } else {
+                    icon.innerText = "✨ 正解の根拠";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-green-600";
+                }
+                
+                buttons[idx].classList.add('ring-2', 'ring-indigo-500');
+                rationaleElem.innerHTML = this.wrapGlossaryTerms(opt.rationale);
+                expBox.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                
+                if (!isReview) {
+                    setTimeout(() => {
+                        expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }
+            },
+            
+            next() {
+                this.currentIdx++;
+                if(this.currentIdx < quizData.length) {
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    this.showResult();
+                }
+            },
+
+            prev() {
+                if (this.currentIdx > 0) {
+                    this.currentIdx--;
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+            
+            showResult() {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('score-display').innerText = this.score;
+                
+                let msg = "";
+                if(this.score === 20) msg = "完璧です！あなたは痤瘡治療のエキスパート看護師です。患者指導でも中心的な役割が期待できます！";
+                else if(this.score >= 16) msg = "素晴らしい！高い臨床知識をお持ちです。副作用への対処や維持療法の考え方がしっかり定着しています。";
+                else if(this.score >= 12) msg = "合格点です。いくつか紛らわしい選択肢に引っかかったかもしれませんが、解説を読み直せば完璧です。";
+                else msg = "お疲れ様でした。実務レベルの高度な問題ですので、問題文や解説の用語をタップして再学習してみてください。";
+                
+                document.getElementById('result-message').innerText = msg;
+            }
+        };
+
+        function openGlossary(term) {
+            document.getElementById('glossary-title').innerText = term;
+            document.getElementById('glossary-body').innerText = glossary[term];
+            document.getElementById('glossary-modal').classList.remove('hidden');
+        }
+
+        function closeGlossary() {
+            document.getElementById('glossary-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+```

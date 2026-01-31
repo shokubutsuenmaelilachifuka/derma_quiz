@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>酒さ（酒皷）・臨床実践エキスパートテスト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .correct-btn { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong-btn { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .neutral-btn { background-color: #f8fafc !important; border-color: #e2e8f0 !important; color: #64748b !important; }
+        .glossary-term { color: #4f46e5; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .glossary-term:hover { color: #3730a3; background-color: #eef2ff; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+    <div id="app" class="max-w-2xl mx-auto px-4 py-8">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4">酒さ（酒皷）・2023ガイドライン<br>臨床実践エキスパートテスト</h1>
+            <p class="text-slate-600 mb-8 leading-relaxed text-sm">
+                最新の酒皷治療ガイドラインに基づく、高度な外来指導・判断能力を問います。<br>
+                設問・解説の<span class="glossary-term">青い用語</span>をタップして根拠を確認してください。
+            </p>
+            <button onclick="quiz.start()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-12 rounded-full transition-all shadow-md">
+                テストを開始する
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <button id="global-prev-btn" onclick="quiz.prev()" class="text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 invisible">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    前の問題
+                </button>
+                <span id="progress-text" class="text-sm font-medium text-slate-500">Question 1 / 20</span>
+                <div class="w-1/2 bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="question-container" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in mb-6">
+                <h2 id="question-text" class="text-lg font-bold mb-6 leading-relaxed">問題文</h2>
+                <div id="options" class="space-y-3">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+
+            <!-- Detailed Explanation Area -->
+            <div id="explanation-box" class="hidden p-6 rounded-2xl mb-6 fade-in border bg-white shadow-sm border-indigo-100">
+                <div id="feedback-header" class="flex items-center gap-2 mb-2 font-bold">
+                    <span id="status-icon"></span>
+                    <span id="status-text"></span>
+                </div>
+                <div id="rationale-text" class="text-slate-700 text-sm leading-relaxed mb-4"></div>
+                <p class="text-[10px] text-slate-400 mb-4 font-medium italic">※他の選択肢ボタンをタップすると、その項目の解説も確認できます。</p>
+                
+                <div class="flex gap-3">
+                    <button id="next-btn" onclick="quiz.next()" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition-colors hidden shadow-lg shadow-indigo-100">
+                        次の問題へ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-bold mb-4 text-slate-800">お疲れ様でした！</h2>
+            <div class="text-6xl font-black text-indigo-600 mb-4"><span id="score-display">0</span> / 20</div>
+            <p id="result-message" class="text-slate-600 mb-8 leading-relaxed"></p>
+            <button onclick="location.reload()" class="bg-slate-800 text-white py-3 px-10 rounded-full font-bold">
+                もう一度最初から挑戦する
+            </button>
+        </div>
+    </div>
+
+    <!-- 用語解説モーダル -->
+    <div id="glossary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl fade-in overflow-y-auto max-h-[90vh]">
+            <h3 id="glossary-title" class="text-lg font-bold text-indigo-700 mb-3 border-b pb-2">用語解説</h3>
+            <p id="glossary-body" class="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap"></p>
+            <button onclick="closeGlossary()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 rounded-xl transition-colors">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const glossary = {
+            "酒さ": "主として中高年の顔面に生じる、原因不明の慢性炎症性疾患。紅斑、毛細血管拡張、丘疹、膿疱などを特徴とします。",
+            "紅斑毛細血管拡張型": "第1度酒さ。顔面中央部の持続的な紅斑と毛細血管拡張、火照り（ほてり）を主体とする病型。",
+            "丘疹膿疱型": "第2度酒さ。紅斑を背景に、痤瘡に類似した丘疹や膿疱が多発する病型。痤瘡との違いは面皰を伴わないことです。",
+            "瘤腫型": "第3度酒さ。鼻部を中心に皮膚が肥厚し、凹凸のある不規則な結節・腫瘤を形成する病型。鼻瘤が代表的です。",
+            "眼型": "酒さの眼合併症。結膜の充血、ドライアイ、眼瞼縁の炎症などを伴う病態。",
+            "面皰": "コメド。毛穴の閉塞により皮脂が貯留したニキビの初期症状。酒さの診断ではこれが「存在しない」ことが極めて重要です。",
+            "毛細血管拡張": "皮膚表面の細い血管が持続的に拡張し、糸状の赤い線として肉眼で確認できる状態。",
+            "メトロニダゾール": "抗炎症・抗酸化作用を持つ薬剤。0.75%ゲルが丘疹膿疱型酒さに対して本邦で「強く推奨（A）」されています。",
+            "カテリシジン": "抗菌ペプチドの一種。酒さ患者では、この活性化・分解が異常亢進し、炎症を誘発していると考えられています。",
+            "カリクレイン": "タンパク分解酵素の一種。酒さ病変部で活性が高く、炎症物質の生成に関与しています。",
+            "ステロイド酒さ": "ステロイド外用薬の長期連用により誘発される、酒さ様皮膚炎。治療に難渋することが多い医原性疾患です。",
+            "アゼライン酸": "穀類に含まれる天然の酸。抗炎症・角化正常化作用を持ち、酒さの外用治療の選択肢の一つとなります。",
+            "テトラサイクリン系抗菌薬": "ドキシサイクリン、ミノサイクリン等。抗菌作用のほか、抗酵素作用により酒さの病態を改善させます。",
+            "ケブネル現象": "物理的刺激によって疾患特有の皮疹が新生する現象。酒さでも強い摩擦が症状を悪化させます。"
+        };
+
+        const quizData = [
+            {
+                q: "酒さの診断において、尋常性痤瘡（ニキビ）と鑑別するための「最も決定的な臨床的特徴」は何ですか？",
+                options: [
+                    { text: "顔面に紅斑（赤み）を伴うこと", isCorrect: false, rationale: "紅斑はいずれの疾患にも認められるため、決定的な鑑別点にはなりません。" },
+                    { text: "膿疱（うみ）が認められること", isCorrect: false, rationale: "膿疱も両疾患で見られます。" },
+                    { text: "面皰（コメド）が認められないこと", isCorrect: true, rationale: "正解です。痤瘡は面皰を初発疹としますが、酒さは面皰を伴わないことが鑑別上の極めて重要なポイントです。" },
+                    { text: "中高年層に発症すること", isCorrect: false, rationale: "年齢層は傾向としてありますが、成人の痤瘡も多いため、決定的な診断根拠とは言えません。" }
+                ]
+            },
+            {
+                q: "酒さの病型分類のうち、鼻部を中心に皮膚が肥厚し、凹凸のある結節を形成するタイプ（鼻瘤など）は何と呼ばれますか？",
+                options: [
+                    { text: "紅斑毛細血管拡張型", isCorrect: false, rationale: "これは第1度酒さで、赤みと血管拡張が主体の病型です。" },
+                    { text: "丘疹膿疱型", isCorrect: false, rationale: "これは第2度酒さで、赤みの上にポツポツとした炎症が生じる病型です。" },
+                    { text: "瘤腫型", isCorrect: true, rationale: "正解です。第3度酒さにあたり、鼻瘤に代表される組織の肥厚と隆起を特徴とする、進行した病態です。" },
+                    { text: "眼型", isCorrect: false, rationale: "結膜充血などの眼症状を主体とする病型です。" }
+                ]
+            },
+            {
+                q: "ガイドライン2023において、丘疹膿疱型（第2度）の酒さに対し「強く推奨（A）」されている唯一の外用薬はどれですか？",
+                options: [
+                    { text: "ステロイド外用薬", isCorrect: false, rationale: "酒さを悪化させるリスクがあるため、原則として推奨されません。" },
+                    { text: "0.75% メトロニダゾールゲル", isCorrect: true, rationale: "正解です。本邦での第III相試験の結果に基づき、丘疹膿疱型酒さに対して強く推奨される標準薬となりました。" },
+                    { text: "過酸化ベンゾイル 2.5% ゲル", isCorrect: false, rationale: "これは尋常性痤瘡の第一選択薬ですが、酒さへの強い推奨はありません。" },
+                    { text: "イオウカンフルローション", isCorrect: false, rationale: "保険適用はありますが、現代の基準による良質なエビデンスには乏しく、推奨度Aではありません。" }
+                ]
+            },
+            {
+                q: "酒さの病態形成に関与していると考えられている、タンパク分解酵素「カリクレイン」によって活性化される炎症性物質は何ですか？",
+                options: [
+                    { text: "ケラチン", isCorrect: false, rationale: "角質のタンパク質であり、活性化される炎症物質ではありません。" },
+                    { text: "メラニン", isCorrect: false, rationale: "紫外線から保護する色素です。" },
+                    { text: "カテリシジン", isCorrect: true, rationale: "正解です。酒さ病変部ではカリクレインの活性が高く、抗菌ペプチドであるカテリシジンを過剰に分解・活性化させることで炎症を招くとされています。" },
+                    { text: "セボム（皮脂）", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "酒さ患者の「洗顔指導」において、皮膚のバリア機能を損なわず、かつ刺激を最小限にするための適切なアドバイスはどれですか？",
+                options: [
+                    { text: "「42℃以上の熱いお湯で、毛穴を開かせて洗ってください」", isCorrect: false, rationale: "熱湯は血管を拡張させ、酒さの紅斑を悪化させるため禁忌です。" },
+                    { text: "「ナイロンタオルで赤みが消えるまでゴシゴシ擦ってください」", isCorrect: false, rationale: "物理的刺激は炎症を悪化させます。" },
+                    { text: "「38〜40℃の微温湯を用い、低刺激性の洗浄剤で優しく洗ってください」", isCorrect: true, rationale: "正解です。温度刺激と摩擦を避けることが、酒さの管理におけるスキンケアの基本です。" },
+                    { text: "「洗顔料は一切使わず、水だけで 1 日 10 回洗ってください」", isCorrect: false, rationale: "過度な洗浄回数は乾燥を招き、逆効果です。" }
+                ]
+            },
+            {
+                q: "酒さの「悪化因子」として、ガイドラインに記載されている代表的な生活習慣の組み合わせはどれですか？",
+                options: [
+                    { text: "日光（紫外線）、急激な温度変化、アルコール摂取", isCorrect: true, rationale: "正解です。これらは血管を拡張させ、紅斑や火照りを誘発する主要な悪化因子として知られています。" },
+                    { text: "適度なジョギング、野菜の摂取、早寝早起き", isCorrect: false, rationale: "これらは一般的に健康に良い習慣であり、酒さの主要な悪化因子ではありません。" },
+                    { text: "毎日 2 リットルの水を飲むことのみ", isCorrect: false, rationale: "間違いです。" },
+                    { text: "テレビの長時間視聴", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "酒さの「紅斑毛細血管拡張型」の治療において、血管病変の改善に選択肢の一つとして推奨されている治療法はどれですか？",
+                options: [
+                    { text: "強力な抗菌薬の飲み薬", isCorrect: false, rationale: "血管そのものの拡張に対して、抗菌薬は直接的な改善効果を持ちません。" },
+                    { text: "パルス色素レーザー (595 nm) などのレーザー・光治療", isCorrect: true, rationale: "正解です。拡張した血管をターゲットとするレーザー治療により、赤みの軽減が期待できます。ただし、保険適用外であることに注意が必要です。" },
+                    { text: "イオウ製剤の厚塗り", isCorrect: false, rationale: "血管拡張に対するエビデンスはありません。" },
+                    { text: "冷却シートの 24 時間貼付", isCorrect: false, rationale: "一時的な鎮静にはなりますが、根本的な治療法ではありません。" }
+                ]
+            },
+            {
+                q: "丘疹膿疱型酒さの内服治療として、テトラサイクリン系抗菌薬が有効とされる「抗菌作用以外の」生理的理由はどれですか？",
+                options: [
+                    { text: "胃腸を元気にする作用があるから", isCorrect: false, rationale: "間違いです。" },
+                    { text: "マトリックスメタロプロテアーゼへの抗酵素作用などによる、抗炎症効果", isCorrect: true, rationale: "正解です。抗菌作用だけでなく、タンパク分解酵素を抑えることで、酒さの炎症プロセスを改善させると考えられています。" },
+                    { text: "皮膚を厚くする作用があるから", isCorrect: false, rationale: "間違いです。" },
+                    { text: "体温を下げる作用があるから", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "眼型酒さ（眼合併症）において、患者が訴えることの多い症状の正しい組み合わせはどれですか？",
+                options: [
+                    { text: "視力の急激な向上、視野の拡大", isCorrect: false, rationale: "間違いです。" },
+                    { text: "結膜の充血、異物感（ゴロゴロする）、ドライアイ", isCorrect: true, rationale: "正解です。酒さの炎症は眼にも及び、粘膜の炎症やマイボーム腺機能不全による不快感を伴います。" },
+                    { text: "色の見え方が変わることのみ", isCorrect: false, rationale: "間違いです。" },
+                    { text: "涙が一切出なくなる無涙症", isCorrect: false, rationale: "ドライアイにはなりますが、完全な無涙症は一般的ではありません。" }
+                ]
+            },
+            {
+                q: "酒さの患者が「ステロイドを塗ると赤みが引くので毎日塗っている」と言っています。看護師が最も警戒すべきリスクは何ですか？",
+                options: [
+                    { text: "薬がなくなること", isCorrect: false, rationale: "間違いです。" },
+                    { text: "連用による皮膚萎縮や、さらに難治な「ステロイド酒さ」の誘発", isCorrect: true, rationale: "正解です。ステロイドは一時的に血管を収縮させて赤みを消しますが、長期連用は依存と悪化（酒さ様皮膚炎）を招くため、速やかな中止と適切な治療への切り替えが必要です。" },
+                    { text: "皮膚が真っ白になり、感覚が消失すること", isCorrect: false, rationale: "間違いです。" },
+                    { text: "食欲が異常に増進すること", isCorrect: false, rationale: "外用薬の通常使用では一般的ではありません。" }
+                ]
+            },
+            {
+                q: "酒さの治療薬「メトロニダゾールゲル」の主な副作用として、臨床的に多く報告されているものはどれですか？",
+                options: [
+                    { text: "全身の激しい筋肉痛", isCorrect: false, rationale: "間違いです。" },
+                    { text: "適用部位の刺激感（ピリピリ感）、乾燥、かゆみ", isCorrect: true, rationale: "正解です。重篤な全身副作用は稀ですが、皮膚局所の刺激症状が出ることがあり、導入時に説明しておくべき点です。" },
+                    { text: "急激な血圧上昇", isCorrect: false, rationale: "間違いです。" },
+                    { text: "手のひらが黄色くなること", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "瘤腫型酒さ（鼻瘤など）に対する治療アプローチとして、教科書に記載されている選択肢はどれですか？",
+                options: [
+                    { text: "鼻を氷で毎日 5 時間冷やす", isCorrect: false, rationale: "間違いです。凍傷のリスクがあります。" },
+                    { text: "外科的切除 や 炭酸ガスレーザー等による集学的な治療", isCorrect: true, rationale: "正解です。組織が肥厚しているため、外用薬だけでは限界があり、外科的なアプローチが検討されます。" },
+                    { text: "保湿剤を 1kg 塗り込む", isCorrect: false, rationale: "間違いです。" },
+                    { text: "鼻を毎日強く叩いて鍛える", isCorrect: false, rationale: "非常に不適切です。" }
+                ]
+            },
+            {
+                q: "酒さ患者の「紫外線対策」について、適切な患者指導はどれですか？",
+                options: [
+                    { text: "「効果を高めるため、日焼け止めは塗らないでください」", isCorrect: false, rationale: "間違いです。紫外線は酒さの主要な悪化因子です。" },
+                    { text: "「適切な遮光（帽子、日傘）を行い、低刺激性のサンスクリーン剤を常用しましょう」", isCorrect: true, rationale: "正解です。日光暴露は紅斑を増悪させるため、日常的な遮光と皮膚を刺激しない日焼け止めの使用を推奨します。" },
+                    { text: "「毎日 1 時間は日光浴をして肌を焼きましょう」", isCorrect: false, rationale: "酒さを悪化させるため、絶対に避けるべきです。" },
+                    { text: "「遮光は無意味なので気にしないでください」", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "アゼライン酸外用薬が酒さの「維持療法」において用いられる理由として、適切なものはどれですか？",
+                options: [
+                    { text: "抗菌作用が最強だから", isCorrect: false, rationale: "間違いです。抗菌力よりも抗炎症・角化正常化作用が注目されます。" },
+                    { text: "耐性菌を誘導せず、抗炎症作用により寛解状態の維持に寄与するため", isCorrect: true, rationale: "正解です。抗菌薬の長期連用を避けつつ、再燃を抑えるための非抗菌薬外用薬としての役割が期待されています。" },
+                    { text: "ステロイドよりも安価だから", isCorrect: false, rationale: "価格が理由の主軸ではありません。" },
+                    { text: "塗った瞬間に皮膚が剥がれるから", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "酒さ患者の食事指導で、控えることを検討すべき具体的な項目の組み合わせは？",
+                options: [
+                    { text: "野菜、果物、水", isCorrect: false, rationale: "これらは通常推奨されます。" },
+                    { text: "アルコール、香辛料（刺激物）、極端に熱い飲み物", isCorrect: true, rationale: "正解です。これらは顔面の血管拡張と火照りを即座に誘発・増悪させるため、回避を指導します。" },
+                    { text: "パン、米、麺類のみ", isCorrect: false, rationale: "間違いです。" },
+                    { text: "サプリメント全般", isCorrect: false, rationale: "一律に控える根拠はありません。" }
+                ]
+            },
+            {
+                q: "丘疹膿疱型酒さにおいて、毛包内から「毛包虫（デモデックス）」が高頻度に検出されることがありますが、これに対する内服療法の位置づけは？",
+                options: [
+                    { text: "全員に必須の治療である", isCorrect: false, rationale: "間違いです。全員への推奨ではありません。" },
+                    { text: "ガイドラインとして一様に推奨できるほどのエビデンスは現時点ではない", isCorrect: true, rationale: "正解です。関与が疑われる例で考慮されることがありますが、標準治療として強く推奨される段階にはありません。" },
+                    { text: "抗菌薬よりも優先される", isCorrect: false, rationale: "間違いです。通常はテトラサイクリン系抗菌薬などの抗炎症効果が優先されます。" },
+                    { text: " 1 回飲むだけで一生治る", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "酒さ患者の QOL（生活の質）を向上させるための「カバーメイク」について、適切な考え方はどれですか？",
+                options: [
+                    { text: "「化粧は不潔なので、一切禁止すべきである」", isCorrect: false, rationale: "間違いです。適切な製品を選べばメイクは精神的支えになります。" },
+                    { text: "「低刺激性の製品を用い、精神的苦痛（赤みへの羞恥心等）を和らげる手段として有効に活用しましょう」", isCorrect: true, rationale: "正解です。外見の変化による心理的負担が大きいため、メイクによるアピアランスケアは看護上も重要です。" },
+                    { text: "「顔が真っ白になるまでコンシーラーを塗り重ねる」よう勧める", isCorrect: false, rationale: "不自然な厚塗りは皮膚への負担になります。" },
+                    { text: "「洗顔料を使わずにメイクを落とす」よう教える", isCorrect: false, rationale: "不適切なオフは悪化の原因になります。" }
+                ]
+            },
+            {
+                q: "紅斑毛細血管拡張型酒さの患者が「顔が火照って辛い」と訴えています。自宅での一時的な対処法として適切なのは？",
+                options: [
+                    { text: "「ドライヤーの熱風を 1 時間当ててください」", isCorrect: false, rationale: "非常に危険であり、症状を激化させます。" },
+                    { text: "「保冷剤をタオル等で包み、数分間軽く患部を冷却することで、血管収縮を助け不快感を緩和できます」", isCorrect: true, rationale: "正解です。冷却は火照りに対する即効性のある物理的対処法です。ただし冷やしすぎには注意します。" },
+                    { text: "「顔を力一杯叩いて血行をさらに良くしてください」", isCorrect: false, rationale: "不適切です。物理的刺激は厳禁です。" },
+                    { text: "「特に何もせず、寝るまで我慢してください」", isCorrect: false, rationale: "共感的アプローチとして不十分です。" }
+                ]
+            },
+            {
+                q: "酒さの治療において、ステロイド外用薬が「禁忌」に近い扱いとされる最大の理由はどれですか？",
+                options: [
+                    { text: "価格が高いから", isCorrect: false, rationale: "間違いです。" },
+                    { text: "一時的に改善するが、中止後のリバウンド（激しい再燃）や血管拡張の恒久化を招くリスクが非常に高いから", isCorrect: true, rationale: "正解です。酒さの病態そのものを根底から悪化させ、治療を極めて困難にする副作用（ステロイド酒さ）が問題視されています。" },
+                    { text: "塗ると顔が青白くなるから", isCorrect: false, rationale: "間違いです。" },
+                    { text: "日光を吸い寄せやすくなるから", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "最後に、酒さの看護における「教育の最優先事項」は何ですか？",
+                options: [
+                    { text: "いかに早く洗顔を終わらせるか", isCorrect: false, rationale: "間違いです。" },
+                    { text: "「増悪因子（日光、熱、摩擦等）の自己把握と回避」を徹底し、セルフケアを確立すること", isCorrect: true, rationale: "正解です。酒さは慢性疾患であり、日々の生活環境のコントロールが治療効果を維持するために最も重要です。" },
+                    { text: "一生病院へ通い続ける覚悟を持たせること", isCorrect: false, rationale: "不適切な依存は避けるべきです。" },
+                    { text: "全ての食物の摂取をやめること", isCorrect: false, rationale: "現実的ではなく、不適切です。" }
+                ]
+            }
+        ];
+
+        const quiz = {
+            currentIdx: 0,
+            score: 0,
+            userAnswers: new Array(quizData.length).fill(null),
+            scoredQuestions: new Set(),
+            
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                this.render();
+            },
+            
+            render() {
+                const q = quizData[this.currentIdx];
+                document.getElementById('progress-text').innerText = `Question ${this.currentIdx + 1} / ${quizData.length}`;
+                document.getElementById('progress-bar').style.width = `${((this.currentIdx + 1) / quizData.length) * 100}%`;
+                
+                const prevBtn = document.getElementById('global-prev-btn');
+                if (this.currentIdx > 0) prevBtn.classList.remove('invisible');
+                else prevBtn.classList.add('invisible');
+                
+                document.getElementById('question-text').innerHTML = this.wrapGlossaryTerms(q.q);
+                
+                const optionsDiv = document.getElementById('options');
+                optionsDiv.innerHTML = '';
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all duration-200 font-medium text-sm sm:text-base shadow-sm leading-snug";
+                    btn.innerText = `${i + 1}. ${opt.text}`;
+                    btn.onclick = () => this.showRationale(i);
+                    optionsDiv.appendChild(btn);
+                });
+                
+                document.getElementById('explanation-box').classList.add('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+                
+                if (this.userAnswers[this.currentIdx] !== null) {
+                    this.showRationale(this.userAnswers[this.currentIdx], true);
+                }
+            },
+
+            wrapGlossaryTerms(text) {
+                let html = text;
+                const sortedTerms = Object.keys(glossary).sort((a, b) => b.length - a.length);
+                sortedTerms.forEach(term => {
+                    const regex = new RegExp(term, 'g');
+                    if (html.indexOf(term) !== -1 && !html.includes(`>${term}<`)) {
+                        html = html.split(term).join(`<span class="glossary-term" onclick="openGlossary('${term}')">${term}</span>`);
+                    }
+                });
+                return html;
+            },
+            
+            showRationale(idx, isReview = false) {
+                const q = quizData[this.currentIdx];
+                const opt = q.options[idx];
+                const expBox = document.getElementById('explanation-box');
+                const header = document.getElementById('feedback-header');
+                const icon = document.getElementById('status-icon');
+                const statusText = document.getElementById('status-text');
+                const rationaleElem = document.getElementById('rationale-text');
+                const nextBtn = document.getElementById('next-btn');
+                const buttons = document.querySelectorAll('#options button');
+
+                if (!isReview && !this.scoredQuestions.has(this.currentIdx)) {
+                    this.userAnswers[this.currentIdx] = idx;
+                    if (opt.isCorrect) this.score++;
+                    this.scoredQuestions.add(this.currentIdx);
+                } else if (!isReview) {
+                    this.userAnswers[this.currentIdx] = idx;
+                }
+
+                buttons.forEach((btn, i) => {
+                    btn.classList.remove('correct-btn', 'wrong-btn', 'ring-2', 'ring-indigo-500', 'neutral-btn');
+                    if (q.options[i].isCorrect) btn.classList.add('correct-btn');
+                    else btn.classList.add('neutral-btn');
+                });
+                
+                if (!opt.isCorrect) {
+                    buttons[idx].classList.remove('neutral-btn');
+                    buttons[idx].classList.add('wrong-btn');
+                    icon.innerText = "🔍 解説";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-red-600";
+                } else {
+                    icon.innerText = "✨ 正解のポイント";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-green-600";
+                }
+                
+                buttons[idx].classList.add('ring-2', 'ring-indigo-500');
+                rationaleElem.innerHTML = this.wrapGlossaryTerms(opt.rationale);
+                expBox.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                
+                if (!isReview) {
+                    setTimeout(() => {
+                        expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }
+            },
+            
+            next() {
+                this.currentIdx++;
+                if(this.currentIdx < quizData.length) {
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    this.showResult();
+                }
+            },
+
+            prev() {
+                if (this.currentIdx > 0) {
+                    this.currentIdx--;
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+            
+            showResult() {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('score-display').innerText = this.score;
+                
+                let msg = "";
+                if(this.score === 20) msg = "完璧です！あなたは最新の酒さ診療を支える真のエキスパート看護師です！";
+                else if(this.score >= 16) msg = "素晴らしい！酒さの病型分類から最新の薬物療法、指導の要点まで深く理解されています。";
+                else if(this.score >= 12) msg = "合格点です。痤瘡との違いや、悪化因子の細かな知識を再確認すれば完璧です。";
+                else msg = "お疲れ様でした。実務レベルの内容ですので、間違えた箇所の用語をタップして、最新ガイドラインを復習してみてください。";
+                
+                document.getElementById('result-message').innerText = msg;
+            }
+        };
+
+        function openGlossary(term) {
+            document.getElementById('glossary-title').innerText = term;
+            document.getElementById('glossary-body').innerText = glossary[term];
+            document.getElementById('glossary-modal').classList.remove('hidden');
+        }
+
+        function closeGlossary() {
+            document.getElementById('glossary-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+```

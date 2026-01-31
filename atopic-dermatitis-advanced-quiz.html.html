@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アトピー性皮膚炎・看護実践エキスパートテスト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .correct-btn { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong-btn { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .neutral-btn { background-color: #f8fafc !important; border-color: #e2e8f0 !important; color: #64748b !important; }
+        .glossary-term { color: #4f46e5; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .glossary-term:hover { color: #3730a3; background-color: #eef2ff; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+    <div id="app" class="max-w-2xl mx-auto px-4 py-8">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4">アトピー性皮膚炎・2024ガイドライン<br>看護実践エキスパートテスト</h1>
+            <p class="text-slate-600 mb-8 leading-relaxed text-sm">
+                診療ガイドライン2024に基づいた、最新の看護・指導知識を問います。<br>
+                問題文・解説文の<span class="glossary-term">青い用語</span>をタップして根拠を確認してください。
+            </p>
+            <button onclick="quiz.start()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-12 rounded-full transition-all shadow-md">
+                テストを開始する
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <button id="global-prev-btn" onclick="quiz.prev()" class="text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 invisible">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    前の問題
+                </button>
+                <span id="progress-text" class="text-sm font-medium text-slate-500">Question 1 / 20</span>
+                <div class="w-1/2 bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="question-container" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in mb-6">
+                <h2 id="question-text" class="text-lg font-bold mb-6 leading-relaxed">問題文</h2>
+                <div id="options" class="space-y-3">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+
+            <!-- Detailed Explanation Area -->
+            <div id="explanation-box" class="hidden p-6 rounded-2xl mb-6 fade-in border bg-white shadow-sm border-indigo-100">
+                <div id="feedback-header" class="flex items-center gap-2 mb-2 font-bold">
+                    <span id="status-icon"></span>
+                    <span id="status-text"></span>
+                </div>
+                <div id="rationale-text" class="text-slate-700 text-sm leading-relaxed mb-4"></div>
+                <p class="text-[10px] text-slate-400 mb-4 font-medium italic">※青い用語をタップすると解説が表示されます。</p>
+                
+                <div class="flex gap-3">
+                    <button id="next-btn" onclick="quiz.next()" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition-colors hidden shadow-lg shadow-indigo-100">
+                        次の問題へ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-bold mb-4 text-slate-800">お疲れ様でした！</h2>
+            <div class="text-6xl font-black text-indigo-600 mb-4"><span id="score-display">0</span> / 20</div>
+            <p id="result-message" class="text-slate-600 mb-8 leading-relaxed"></p>
+            <button onclick="location.reload()" class="bg-slate-800 text-white py-3 px-10 rounded-full font-bold">
+                もう一度最初から挑戦する
+            </button>
+        </div>
+    </div>
+
+    <!-- 用語解説モーダル -->
+    <div id="glossary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl fade-in overflow-y-auto max-h-[90vh]">
+            <h3 id="glossary-title" class="text-lg font-bold text-indigo-700 mb-3 border-b pb-2">用語解説</h3>
+            <p id="glossary-body" class="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap"></p>
+            <button onclick="closeGlossary()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 rounded-xl transition-colors">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const glossary = {
+            "アトピー素因": "本人または家族に気管支喘息、アレルギー性鼻炎・結膜炎、アトピー性皮膚炎のいずれかがある、またはIgE抗体を産生しやすい体質のこと。",
+            "TARC": "Th2細胞を遊走させるケモカイン。アトピー性皮膚炎の病勢（炎症の強さ）を最も鋭敏に反映する血液検査項目です。",
+            "SCCA2": "扁平上皮癌関連抗原。小児（15歳以下）のアトピー性皮膚炎の重症度を反映するマーカーとして保険適用があります。",
+            "プロアクティブ療法": "急性期の治療で湿疹が消えた後も、週数回の頻度でステロイドやタクロリムス外用を定期的に行い、寛解状態を維持する治療法。",
+            "リアクティブ療法": "湿疹が悪化した時だけその都度塗布し、良くなったら即座に中止する従来型の治療法。再燃を繰り返しやすくなります。",
+            "JAK阻害薬": "細胞内の炎症シグナルを伝えるJAK（ヤヌスキナーゼ）をブロックする薬剤。デルゴシチニブ（外用）や、バリシチニブ（内服）などがあります。",
+            "生物学的製剤": "特定の炎症物質（サイトカイン）をピンポイントで抑える注射薬。デュピルマブ（IL-4/13阻害）などが代表的です。",
+            "ネモリズマブ": "「かゆみ」の伝達に特化したサイトカイン IL-31 の受容体を標的とした生物学的製剤。商品名ミチーガ。",
+            "FTU": "フィンガーチップユニット。人差し指先から第一関節までの量（約0.5g）。大人の手のひら2枚分を塗るための世界共通の基準量です。",
+            "EASI": "アトピー性皮膚炎の重症度を皮膚の状態（赤み、腫れ、傷、皮膚の厚み）から数値化する、医師や看護師が用いる評価指標。",
+            "POEM": "患者自身が直近1週間の「かゆみ」「不眠」「皮膚の乾燥」などを回答し、主観的な症状の強さを評価する質問票。",
+            "フィラグリン": "角質細胞内でケラチンを束ねるタンパク質。分解されると天然保湿因子（NMF）になり、バリア機能の核となります。",
+            "カポジ水痘様発疹症": "アトピー性皮膚炎の患部にヘルペスウイルスが二次感染し、多発する小水疱と発熱を伴う重症感染症。ステロイドは一時中止が必要です。",
+            "リンパ球数": "JAK阻害薬（内服）の服用中に減少することがあり、副作用モニタリングにおいて血算検査で確認される項目です。",
+            "バリア機能": "皮膚の最外層が担う、刺激の侵入と水分の漏出を防ぐ役割。アトピー性皮膚炎ではこの機能が先天的・後天的に破綻しています。",
+            "サンバーン": "光線療法や日光浴によって生じる、皮膚が赤くヒリヒリする急性の炎症反応。"
+        };
+
+        const quizData = [
+            {
+                q: "アトピー性皮膚炎の診断基準において、症状が持続する「期間」による定義で正しいものはどれですか？",
+                options: [
+                    { text: "乳児・成人ともに 2ヶ月 以上", isCorrect: false, rationale: "間違いです。乳児は2ヶ月ですが、成人の定義とは異なります。" },
+                    { text: "乳児は 2ヶ月 以上、成人は 6ヶ月 以上", isCorrect: true, rationale: "正解です。アトピー性皮膚炎は慢性・反復的な経過を特徴とし、成人の場合は半年（6ヶ月）以上の持続が診断に必要です。" },
+                    { text: "乳児は 6ヶ月 以上、成人は 1年 以上", isCorrect: false, rationale: "間違いです。そこまでの長期間は必要ありません。" },
+                    { text: "年齢に関わらず一律 3ヶ月 以上", isCorrect: false, rationale: "間違いです。年齢によって基準が分けられています。" }
+                ]
+            },
+            {
+                q: "成人アトピー性皮膚炎の病勢を数値化する血清「TARC」について、成人の基準値（上限）はどれですか？",
+                options: [
+                    { text: "250 pg/mL", isCorrect: false, rationale: "少なすぎます。LDHなどの基準値と混同しやすい数値です。" },
+                    { text: "450 pg/mL", isCorrect: true, rationale: "正解です。ガイドラインでは成人におけるTARCの基準値を450pg/mL未満としています。" },
+                    { text: "743 pg/mL", isCorrect: false, rationale: "これは15歳以下の小児におけるTARC基準値です。年齢による違いの把握が必須です。" },
+                    { text: "998 pg/mL", isCorrect: false, rationale: "これは1歳以上2歳未満の乳幼児における基準値です。" }
+                ]
+            },
+            {
+                q: "「プロアクティブ療法」への移行を検討すべき「寛解」の定義として、適切な皮膚の状態はどれですか？",
+                options: [
+                    { text: "かゆみが消失した時", isCorrect: false, rationale: "かゆみがなくても炎症（赤みや浸潤）が残っていれば、すぐに再発するため不適切です。" },
+                    { text: "紅斑が完全に消失した時", isCorrect: false, rationale: "見た目の赤みがなくても、触診で厚み（浸潤）があればまだ寛解とは言えません。" },
+                    { text: "紅斑、丘疹、浸潤などの皮疹が消失し、触診でも皮膚の厚みを感じない状態になった時", isCorrect: true, rationale: "正解です。触ってもツルツルしている「完全な炎症の消失」を確認してから、間欠的な外用（プロアクティブ）に移行します。" },
+                    { text: "ステロイドによる副作用（皮膚萎縮）が見られた時", isCorrect: false, rationale: "それは治療の見直しや休薬のサインであり、プロアクティブ療法の導入定義ではありません。" }
+                ]
+            },
+            {
+                q: "タクロリムス軟膏（プロトピック）の初回使用時に、患者に必ず説明しておくべき特徴的な随伴症状は何ですか？",
+                options: [
+                    { text: "急激な眠気", isCorrect: false, rationale: "間違いです。外用薬による全身性の副作用としては一般的ではありません。" },
+                    { text: "塗布部位の一時的な「刺激感（ヒリヒリ、灼熱感）」", isCorrect: true, rationale: "正解です。特に炎症が強い初期に現れますが、数日の継続で消失することを伝えないと、自己判断で中止される原因になります。" },
+                    { text: "塗った場所の毛が抜けること", isCorrect: false, rationale: "間違いです。脱毛はタクロリムス軟膏の典型的な副作用ではありません。" },
+                    { text: "血圧の急激な低下", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "生物学的製剤「デュピルマブ（デュピクセント）」を使用中の患者が、最も頻繁に訴える特異的な副作用は何ですか？",
+                options: [
+                    { text: "耳鳴り", isCorrect: false, rationale: "間違いです。" },
+                    { text: "結膜炎（目の赤み、かゆみ、異物感）", isCorrect: true, rationale: "正解です。デュピルマブに特徴的な副作用であり、必要に応じて眼科受診や点眼治療を並行して行います。" },
+                    { text: "髪の毛が薄くなること", isCorrect: false, rationale: "間違いです。むしろアトピーが改善することで毛髪の状態が良くなる患者も多いです。" },
+                    { text: "足の裏の角質が厚くなること", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "「かゆみ」の伝達に深く関与するサイトカイン「IL-31」を直接ブロックする治療薬はどれですか？",
+                options: [
+                    { text: "バリシチニブ（オルミエント）", isCorrect: false, rationale: "JAK阻害薬であり、IL-31を直接ブロックする抗体製剤ではありません。" },
+                    { text: "デュピルマブ（デュピクセント）", isCorrect: false, rationale: "IL-4とIL-13を標的としています。" },
+                    { text: "ネモリズマブ（ミチーガ）", isCorrect: true, rationale: "正解です。IL-31の受容体に結合し、アトピー特有の激しいかゆみを直接的に抑制します。" },
+                    { text: "デルゴシチニブ（コレクチム）", isCorrect: false, rationale: "JAK阻害の外用薬です。" }
+                ]
+            },
+            {
+                q: "外用指導における「FTU」の考え方で、5g入りのチューブ1本は大人の「手のひら」およそ何枚分に相当しますか？",
+                options: [
+                    { text: "5 枚分", isCorrect: false, rationale: "間違いです。これは5gを0.5gで割った数ですが、1 FTUは手のひら「2枚分」です。" },
+                    { text: "10 枚分", isCorrect: false, rationale: "間違いです。" },
+                    { text: "20 枚分", isCorrect: true, rationale: "正解です。1 FTU（人差し指1関節分：約0.5g）が手のひら2枚分なので、5gチューブ（10 FTU）なら20枚分となります。" },
+                    { text: "50 枚分", isCorrect: false, rationale: "多すぎます。" }
+                ]
+            },
+            {
+                q: "JAK阻害薬（内服）のバリシチニブやアップアダシチニブの使用中に、最も警戒すべき「日和見感染症」はどれですか？",
+                options: [
+                    { text: "水虫（足白癬）", isCorrect: false, rationale: "注意は必要ですが、JAK阻害薬において特異的に警戒される重篤な感染症ではありません。" },
+                    { text: "帯状疱疹", isCorrect: true, rationale: "正解です。細胞内のシグナル伝達を抑えることで、ウイルスへの免疫が低下し、帯状疱疹を発症しやすくなります。" },
+                    { text: "胃腸炎", isCorrect: false, rationale: "間違いです。" },
+                    { text: "風疹", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "小児（15歳以下）のアトピー性皮膚炎の病勢マーカーとして保険適用があり、採血で測定される項目はどれですか？",
+                options: [
+                    { text: "CRP", isCorrect: false, rationale: "全身の炎症を見ますが、アトピーの病勢には特異的ではありません。" },
+                    { text: "SCCA2", isCorrect: true, rationale: "正解です。小児の病勢を反映し、治療効果の客観的な指標として用いられます。" },
+                    { text: "ヘモグロビンA1c", isCorrect: false, rationale: "糖尿病の指標です。" },
+                    { text: "中性脂肪", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "皮膚バリア機能の核となる成分「セラミド」や「フィラグリン」の代謝を正常化するために、入浴後の保湿を推奨する「タイミング」として最適なのはどれですか？",
+                options: [
+                    { text: "入浴から 60分 後", isCorrect: false, rationale: "完全に皮膚が乾燥してしまい、バリアの補完効果が落ちてしまいます。" },
+                    { text: "入浴から 30分 後", isCorrect: false, rationale: "水分が逃げた後のタイミングとなり、遅すぎます。" },
+                    { text: "入浴直後（理想的には 5分 以内）", isCorrect: true, rationale: "正解です。皮膚の水分がまだ保たれているうちに油分で蓋をすることが、バリア機能の回復に最も効果的です。" },
+                    { text: "体が冷え切った後", isCorrect: false, rationale: "不適切です。" }
+                ]
+            },
+            {
+                q: "患者が直近1週間の症状の程度（かゆみ、不眠等）を回答し、治療の満足度を測る「患者主導型」の評価指標はどれですか？",
+                options: [
+                    { text: "EASI", isCorrect: false, rationale: "これは医療者が皮膚の状態を見て客観的に計算する指標です。" },
+                    { text: "TARC", isCorrect: false, rationale: "採血結果によるバイオマーカーです。" },
+                    { text: "POEM", isCorrect: true, rationale: "正解です。患者自身の主観的な苦痛を数値化する、極めて重要な質問票です。" },
+                    { text: "HbA1c", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "JAK阻害外用薬「デルゴシチニブ（コレクチム）」の使用について、正しい制限（ガイドライン2024時点）はどれですか？",
+                options: [
+                    { text: "乳児には使用できない", isCorrect: false, rationale: "生後6ヶ月以上から適応があります。" },
+                    { text: "2歳以上から使用可能である", isCorrect: false, rationale: "それよりも低い月齢から使用可能です。" },
+                    { text: "生後6ヶ月以上から使用可能である", isCorrect: true, rationale: "正解です。小児（生後6ヶ月以上）から成人まで、広範な年齢で使用可能な使い勝手の良い薬剤です。" },
+                    { text: "必ず18歳以上の成人にのみ用いる", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "ステロイド外用薬を塗る際、皮膚バリアを傷つけないための適切な指の使い方はどれですか？",
+                options: [
+                    { text: "白く残るくらいに厚く塗り広げる", isCorrect: false, rationale: "厚すぎると服についてしまい、必要量以上に無駄になります。" },
+                    { text: "力を入れてゴシゴシと擦り込む", isCorrect: false, rationale: "摩擦刺激が炎症を悪化させる（ケブネル現象様）ため厳禁です。" },
+                    { text: "優しく滑らせるように「乗せる」イメージで塗る", isCorrect: true, rationale: "正解です。皮膚表面を傷つけず、かつFTUを守った十分な量を定着させるために理想的な方法です。" },
+                    { text: "爪を立てて皮膚の中に押し込む", isCorrect: false, rationale: "非常に危険です。感染や炎症の悪化を招きます。" }
+                ]
+            },
+            {
+                q: "シクロスポリン（内服免疫抑制剤）を使用中のアトピー性皮膚炎患者に対し、看護師が必ず確認すべき「併用禁止」のものはどれですか？",
+                options: [
+                    { text: "ビタミン剤", isCorrect: false, rationale: "間違いです。" },
+                    { text: "生ワクチン（麻疹・風疹など）の接種", isCorrect: true, rationale: "正解です。免疫抑制下で生ワクチンを接種すると、ワクチンの菌により重症化する恐れがあるため禁忌です。" },
+                    { text: "お茶の摂取", isCorrect: false, rationale: "問題ありません。" },
+                    { text: "軽いジョギング", isCorrect: false, rationale: "問題ありません。" }
+                ]
+            },
+            {
+                q: "角質細胞間脂質の主成分である「セラミド」を補う保湿剤の使用を勧める、最大の医学的根拠は何ですか？",
+                options: [
+                    { text: "皮膚が白くなるから", isCorrect: false, rationale: "間違いです。" },
+                    { text: "角質細胞同士の隙間を埋め、アレルゲンや細菌の侵入を物理的に阻止（バリア）するため", isCorrect: true, rationale: "正解です。アトピー性皮膚炎の根本にある「バリアの穴」を外的に塞ぐことで、炎症のサイクルを断ち切ります。" },
+                    { text: "皮膚の温度を上げるため", isCorrect: false, rationale: "間違いです。" },
+                    { text: "ステロイドの量を増やすため", isCorrect: false, rationale: "逆です。保湿を徹底することでステロイドの必要量を減らすのが目的です。" }
+                ]
+            },
+            {
+                q: "アトピー性皮膚炎の患部に、急激に多数の「小さく凹んだ水疱」が現れた際、看護師が真っ先に疑うべき合併症は？",
+                options: [
+                    { text: "薬疹", isCorrect: false, rationale: "薬疹は紅斑が主体であることが多く、凹んだ水疱は特徴的ではありません。" },
+                    { text: "カポジ水痘様発疹症（ヘルペスの重症化）", isCorrect: true, rationale: "正解です。放置すると全身に広がり危険なため、速やかに抗ウイルス薬の治療が必要です。ステロイドは一時中断します。" },
+                    { text: "疥癬（ダニ）", isCorrect: false, rationale: "疥癬は指の間などの「トンネル」が特徴的です。" },
+                    { text: "ニキビ（ざ瘡）", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "「光線療法（Narrow-band UVB）」を通院で行う患者に対し、当日中に守ってもらうべき禁止事項は？",
+                options: [
+                    { text: "お風呂に入ること", isCorrect: false, rationale: "優しく洗う分には問題ありません。" },
+                    { text: "照射部位を日光（紫外線）にさらすこと", isCorrect: true, rationale: "正解です。治療で浴びたUV量に太陽のUVが重なり、深刻な火傷（重症紅斑）になる恐れがあります。サングラスや衣服で遮光を徹底します。" },
+                    { text: "水をたくさん飲むこと", isCorrect: false, rationale: "むしろ水分補給は推奨されます。" },
+                    { text: "野菜を食べるのをやめること", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "PDE4阻害外用薬「ジファミラスト（モイゼルト）」の特徴について、説明として正しいのはどれですか？",
+                options: [
+                    { text: "ステロイドよりも副作用が強い", isCorrect: false, rationale: "ステロイドのような皮膚萎縮などの副作用がほぼない、使いやすい薬剤です。" },
+                    { text: "細胞内のPDE4という酵素を阻害し、炎症を抑える、非ステロイドの新しい外用薬である", isCorrect: true, rationale: "正解です。副作用が少なく長期使いやすいため、顔面や小児の維持療法に重宝されます。" },
+                    { text: "塗った瞬間に皮膚が剥がれ落ちる", isCorrect: false, rationale: "間違いです。" },
+                    { text: "20歳以上にしか使えない", isCorrect: false, rationale: "生後3ヶ月の乳幼児から適応があります。" }
+                ]
+            },
+            {
+                q: "アトピー性皮膚炎患者が「石鹸」を使用する際の適切な洗い方の指導は？",
+                options: [
+                    { text: "スクラブ入りのタオルでしっかり擦る", isCorrect: false, rationale: "バリアをさらに壊してしまうため厳禁です。" },
+                    { text: "石鹸をよく泡立て、泡をクッションにして素手で優しく洗う", isCorrect: true, rationale: "正解です。摩擦を最小限にしつつ、不要な皮脂や汚れ（黄色ブドウ球菌など）を洗い流すことが重要です。" },
+                    { text: "石鹸は一生使わないように言う", isCorrect: false, rationale: "汚れや古い油分（酸化した皮脂）が炎症の原因になるため、適切な洗浄は必要です。" },
+                    { text: "熱湯で流しながら洗う", isCorrect: false, rationale: "皮脂を奪いすぎるため不適切です。" }
+                ]
+            },
+            {
+                q: "最後に、アトピー性皮膚炎のトータルケアにおいて、看護師が最も意識すべき「教育」のゴールは何ですか？",
+                options: [
+                    { text: "患者を病院に来させないこと", isCorrect: false, rationale: "間違いです。" },
+                    { text: "患者が疾患と治療を正しく理解し、適切なセルフケア（外用・環境調整）を継続できるよう支援すること", isCorrect: true, rationale: "正解です。皮膚科治療は「塗る」という患者の行動がすべてを左右するため、その動機付けと手技習得の支援が最大の役割です。" },
+                    { text: "全ての薬をやめさせること", isCorrect: false, rationale: "不適切な脱ステロイドなどは悪化を招きます。正しい薬剤管理が重要です。" },
+                    { text: "診察室での時間を1分以内にすること", isCorrect: false, rationale: "効率よりも指導の質が重要です。" }
+                ]
+            }
+        ];
+
+        const quiz = {
+            currentIdx: 0,
+            score: 0,
+            userAnswers: new Array(quizData.length).fill(null),
+            scoredQuestions: new Set(),
+            
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                this.render();
+            },
+            
+            render() {
+                const q = quizData[this.currentIdx];
+                document.getElementById('progress-text').innerText = `Question ${this.currentIdx + 1} / ${quizData.length}`;
+                document.getElementById('progress-bar').style.width = `${((this.currentIdx + 1) / quizData.length) * 100}%`;
+                
+                const prevBtn = document.getElementById('global-prev-btn');
+                if (this.currentIdx > 0) prevBtn.classList.remove('invisible');
+                else prevBtn.classList.add('invisible');
+                
+                document.getElementById('question-text').innerHTML = this.wrapGlossaryTerms(q.q);
+                
+                const optionsDiv = document.getElementById('options');
+                optionsDiv.innerHTML = '';
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all duration-200 font-medium text-sm sm:text-base shadow-sm leading-snug";
+                    btn.innerText = `${i + 1}. ${opt.text}`;
+                    btn.onclick = () => this.showRationale(i);
+                    optionsDiv.appendChild(btn);
+                });
+                
+                document.getElementById('explanation-box').classList.add('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+                
+                if (this.userAnswers[this.currentIdx] !== null) {
+                    this.showRationale(this.userAnswers[this.currentIdx], true);
+                }
+            },
+
+            wrapGlossaryTerms(text) {
+                let html = text;
+                const sortedTerms = Object.keys(glossary).sort((a, b) => b.length - a.length);
+                sortedTerms.forEach(term => {
+                    const regex = new RegExp(term, 'g');
+                    if (html.indexOf(term) !== -1 && !html.includes(`>${term}<`)) {
+                        html = html.split(term).join(`<span class="glossary-term" onclick="openGlossary('${term}')">${term}</span>`);
+                    }
+                });
+                return html;
+            },
+            
+            showRationale(idx, isReview = false) {
+                const q = quizData[this.currentIdx];
+                const opt = q.options[idx];
+                const expBox = document.getElementById('explanation-box');
+                const header = document.getElementById('feedback-header');
+                const icon = document.getElementById('status-icon');
+                const statusText = document.getElementById('status-text');
+                const rationaleElem = document.getElementById('rationale-text');
+                const nextBtn = document.getElementById('next-btn');
+                const buttons = document.querySelectorAll('#options button');
+
+                if (!isReview && !this.scoredQuestions.has(this.currentIdx)) {
+                    this.userAnswers[this.currentIdx] = idx;
+                    if (opt.isCorrect) this.score++;
+                    this.scoredQuestions.add(this.currentIdx);
+                } else if (!isReview) {
+                    this.userAnswers[this.currentIdx] = idx;
+                }
+
+                buttons.forEach((btn, i) => {
+                    btn.classList.remove('correct-btn', 'wrong-btn', 'ring-2', 'ring-indigo-500', 'neutral-btn');
+                    if (q.options[i].isCorrect) btn.classList.add('correct-btn');
+                    else btn.classList.add('neutral-btn');
+                });
+                
+                if (!opt.isCorrect) {
+                    buttons[idx].classList.remove('neutral-btn');
+                    buttons[idx].classList.add('wrong-btn');
+                    icon.innerText = "🔍 解説";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-red-600";
+                } else {
+                    icon.innerText = "✨ 正解の根拠";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-green-600";
+                }
+                
+                buttons[idx].classList.add('ring-2', 'ring-indigo-500');
+                rationaleElem.innerHTML = this.wrapGlossaryTerms(opt.rationale);
+                expBox.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                
+                if (!isReview) {
+                    setTimeout(() => {
+                        expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }
+            },
+            
+            next() {
+                this.currentIdx++;
+                if(this.currentIdx < quizData.length) {
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    this.showResult();
+                }
+            },
+
+            prev() {
+                if (this.currentIdx > 0) {
+                    this.currentIdx--;
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+            
+            showResult() {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('score-display').innerText = this.score;
+                
+                let msg = "";
+                if(this.score === 20) msg = "完璧です！最新のガイドラインを隅々までマスターしています。自信を持って指導にあたってください。";
+                else if(this.score >= 16) msg = "素晴らしい！臨床知識も専門用語も非常に高いレベルにあります。";
+                else if(this.score >= 12) msg = "合格点です。いくつか新しい概念（JAK阻害薬等）で迷ったかもしれません。解説を再確認しましょう。";
+                else msg = "お疲れ様でした。特にTARC値の基準やプロアクティブ療法の定義など、基本的な定義を再確認してみてください。";
+                
+                document.getElementById('result-message').innerText = msg;
+            }
+        };
+
+        function openGlossary(term) {
+            document.getElementById('glossary-title').innerText = term;
+            document.getElementById('glossary-body').innerText = glossary[term];
+            document.getElementById('glossary-modal').classList.remove('hidden');
+        }
+
+        function closeGlossary() {
+            document.getElementById('glossary-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+```

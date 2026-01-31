@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>円形脱毛症・看護実践エキスパートテスト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .correct-btn { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong-btn { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .neutral-btn { background-color: #f8fafc !important; border-color: #e2e8f0 !important; color: #64748b !important; }
+        .glossary-term { color: #4f46e5; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .glossary-term:hover { color: #3730a3; background-color: #eef2ff; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+    <div id="app" class="max-w-2xl mx-auto px-4 py-8">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4">円形脱毛症・2024ガイドライン<br>臨床実践エキスパートテスト</h1>
+            <p class="text-slate-600 mb-8 leading-relaxed text-sm">
+                2024年最新ガイドラインに基づく、外来での判断・指導能力を問います。<br>
+                設問・解説の<span class="glossary-term">青い用語</span>をタップして正確な根拠を確認してください。
+            </p>
+            <button onclick="quiz.start()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-12 rounded-full transition-all shadow-md">
+                テストを開始する
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <button id="global-prev-btn" onclick="quiz.prev()" class="text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 invisible">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    前の問題
+                </button>
+                <span id="progress-text" class="text-sm font-medium text-slate-500">Question 1 / 20</span>
+                <div class="w-1/2 bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="question-container" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in mb-6">
+                <h2 id="question-text" class="text-lg font-bold mb-6 leading-relaxed">問題文</h2>
+                <div id="options" class="space-y-3">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+
+            <!-- Detailed Explanation Area -->
+            <div id="explanation-box" class="hidden p-6 rounded-2xl mb-6 fade-in border bg-white shadow-sm border-indigo-100">
+                <div id="feedback-header" class="flex items-center gap-2 mb-2 font-bold">
+                    <span id="status-icon"></span>
+                    <span id="status-text"></span>
+                </div>
+                <div id="rationale-text" class="text-slate-700 text-sm leading-relaxed mb-4"></div>
+                <p class="text-[10px] text-slate-400 mb-4 font-medium italic">※他の選択肢ボタンをタップすると、その誤りの根拠も確認できます。</p>
+                
+                <div class="flex gap-3">
+                    <button id="next-btn" onclick="quiz.next()" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition-colors hidden shadow-lg shadow-indigo-100">
+                        次の問題へ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-bold mb-4 text-slate-800">お疲れ様でした！</h2>
+            <div class="text-6xl font-black text-indigo-600 mb-4"><span id="score-display">0</span> / 20</div>
+            <p id="result-message" class="text-slate-600 mb-8 leading-relaxed"></p>
+            <button onclick="location.reload()" class="bg-slate-800 text-white py-3 px-10 rounded-full font-bold">
+                もう一度最初から挑戦する
+            </button>
+        </div>
+    </div>
+
+    <!-- 用語解説モーダル -->
+    <div id="glossary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl fade-in overflow-y-auto max-h-[90vh]">
+            <h3 id="glossary-title" class="text-lg font-bold text-indigo-700 mb-3 border-b pb-2">用語解説</h3>
+            <p id="glossary-body" class="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap"></p>
+            <button onclick="closeGlossary()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 rounded-xl transition-colors">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const glossary = {
+            "円形脱毛症": "典型的には円形・類円形の脱毛斑を生じる後天性・非瘢痕性の疾患。成長期毛包を標的とした自己免疫反応が本態です。",
+            "SALTスコア": "Severity of Alopecia Tool。頭部を4部位に分け、それぞれの脱毛面積から頭皮全体の脱毛率を算出する世界標準の重症度指標。",
+            "ヘアプルテスト": "約50〜60本の毛を優しく牽引し、10%以上の抜毛があれば陽性とする検査。活動期の診断に有用です。",
+            "トリコスコピー": "ダーモスコピーを用いた頭皮・毛髪の拡大観察。黒点、黄点、感嘆符毛、断裂毛などの特徴的所見を確認します。",
+            "感嘆符毛": "根元に向かって細くなる、AA活動期に特有の短断裂毛。トリコスコピーでの重要所見です。",
+            "黒点": "毛孔内で毛幹が破壊された点状の所見。活動性の高いAAで認められます。",
+            "成長期": "毛母細胞が活発に分裂し、新しい毛を産生している時期。AAではこの時期の毛包が免疫攻撃を受けます。",
+            "休止期": "毛の成長が止まり、脱落を待つ時期。AAの急速進行期では、多くの毛が強制的にこの時期へと移行します。",
+            "局所免疫療法": "SADBEなどの試薬で意図的に接触皮膚炎を起こし、毛包周囲の免疫バランスを変化させて発毛を促す治療。慢性期に有効です。",
+            "SADBE": "スクアリン酸ジブチルエステル。局所免疫療法に用いられる感作剤。加水分解しやすいため保管に注意を要します。",
+            "JAK阻害薬": "炎症シグナルを伝えるJAK経路を阻害する内服薬。バリシチニブやリトレシチニブが重症AAに保険適用されています。",
+            "バリシチニブ": "JAK1/2阻害薬（商品名オルミエント）。SALTスコア50以上の難治例に使用されます。適応は薬事上の成人（15歳以上）です。",
+            "リトレシチニブ": "JAK3/TECファミリーキナーゼ阻害薬（商品名リットフーロ）。12歳以上の重症AAに使用可能な最新の治療薬です。",
+            "ステロイドパルス療法": "メチルプレドニゾロンを3日間大量点滴する治療。発症6ヶ月以内の急速進行期（S2以上）が主な適応です。",
+            "蛇行型": "後頭部から側頭部の生え際に沿って帯状に脱毛するタイプ。通常型に比べて難治であることが多いです。",
+            "汎発型": "頭髪が全て抜ける全頭型に加え、眉毛、睫毛、体毛など全身の毛が脱落する最も重症な病型。",
+            "PIADS": "かつら（ウィッグ）などの福祉用具が患者の自尊心や適応性に与える影響を評価する心理的尺度。",
+            "アトピー素因": "本人や家族に喘息、アトピー性皮膚炎などがある、またはIgEが高い体質。AAの重症化に関連するとされています。"
+        };
+
+        const quizData = [
+            {
+                q: "円形脱毛症の重症度を算出する「SALTスコア」において、頭頂部（Vertex）が占める面積の割合として正しい数値はどれですか？",
+                options: [
+                    { text: "18 %", isCorrect: false, rationale: "これは「左右の側頭部」それぞれの配分率です。" },
+                    { text: "24 %", isCorrect: false, rationale: "これは「後頭部」の配分率です。" },
+                    { text: "40 %", isCorrect: true, rationale: "正解です。SALTスコアの計算では頭頂部を40%とし、最も大きな重み付けがなされています。" },
+                    { text: "50 %", isCorrect: false, rationale: "間違いです。頭頂部単体で半分を占めるわけではありません。" }
+                ]
+            },
+            {
+                q: "最新のガイドライン2024において、JAK阻害薬の「リトレシチニブ（商品名リットフーロ）」が使用可能な年齢として正しいものはどれですか？",
+                options: [
+                    { text: "6 歳 以上", isCorrect: false, rationale: "間違いです。6歳以上で適応があるのは一部の全身療法のみですが、JAK阻害薬ではありません。" },
+                    { text: "12 歳 以上", isCorrect: true, rationale: "正解です。リトレシチニブは12歳以上の重症円形脱毛症患者に対して、保険適用が認められています。" },
+                    { text: "15 歳 以上", isCorrect: false, rationale: "これは「バリシチニブ」の適応年齢（薬事上の成人）に相当する数値です。" },
+                    { text: "18 歳 以上", isCorrect: false, rationale: "間違いです。国際共同治験の結果に基づき、12歳から使用可能です。" }
+                ]
+            },
+            {
+                q: "円形脱毛症の活動性を評価する「ヘアプルテスト」において、陽性と判断される抜毛の割合の基準はどれですか？",
+                options: [
+                    { text: "2 % 以上", isCorrect: false, rationale: "健常な頭皮でも2本（数%）程度の抜毛は正常範囲内とされます。" },
+                    { text: "5 % 以上", isCorrect: false, rationale: "間違いです。" },
+                    { text: "10 % 以上", isCorrect: true, rationale: "正解です。約50〜60本の毛を牽引し、10%以上の毛が抜ける場合に活動性あり（陽性）と判断します。" },
+                    { text: "30 % 以上", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "トリコスコピー観察において、円形脱毛症の診断に「特異性が極めて高い」とされる所見はどれですか？",
+                options: [
+                    { text: "黄点（Yellow dots）", isCorrect: false, rationale: "黄点は男性型脱毛症など他の疾患でも見られるため、AA固有の特異的所見ではありません。" },
+                    { text: "断裂毛（Broken hairs）", isCorrect: false, rationale: "断裂毛はトリコチロマニア（抜毛症）でも認められるため、鑑別が必要です。" },
+                    { text: "感嘆符毛（Exclamation mark hairs）", isCorrect: true, rationale: "正解です。根元に向かって細くなるこの形態は、AAの活動期を強く示唆する極めて特異的な所見です。" },
+                    { text: "短軟毛（Short vellus hairs）", isCorrect: false, rationale: "これは「再生」を示唆する所見であり、他の脱毛症の回復期にも認められます。" }
+                ]
+            },
+            {
+                q: "円形脱毛症の臨床型（分類）のうち、生え際の髪の毛が帯状に抜けてしまうタイプを何と呼びますか？",
+                options: [
+                    { text: "全頭型", isCorrect: false, rationale: "頭部全体の毛が抜けるタイプです。" },
+                    { text: "汎発型", isCorrect: false, rationale: "全身の毛が抜けるタイプです。" },
+                    { text: "蛇行型（Ophiasis）", isCorrect: true, rationale: "正解です。後頭部から側頭部の生え際に沿って抜けるタイプで、通常型に比べて治療抵抗性のことが多いです。" },
+                    { text: "びまん型", isCorrect: false, rationale: "境界がはっきりせず、全体的に薄くなるタイプです。" }
+                ]
+            },
+            {
+                q: "ステロイドパルス療法を行う際、ガイドラインで推奨される主な対象患者の条件はどれですか？",
+                options: [
+                    { text: "発症から 1年 以上経過した固定期の全頭型患者", isCorrect: false, rationale: "固定期や慢性の全頭型に対しては、パルス療法の有効性は極めて低くなります。" },
+                    { text: "発症から 6ヶ月 以内の急速進行期にある、S2以上の成人患者", isCorrect: true, rationale: "正解です。発症早期かつ急速に拡大している重症例がパルス療法の最も良い適応とされています。" },
+                    { text: "5歳未満の乳幼児における単発型患者", isCorrect: false, rationale: "小児、特に乳幼児へのパルス療法は、副作用のリスクから原則行わないことが推奨されています。" },
+                    { text: "脱毛斑が 1個 だけあり、自然治癒が期待できる患者", isCorrect: false, rationale: "単発型であれば外用や局注が優先され、全身への強力なパルス療法は行いません。" }
+                ]
+            },
+            {
+                q: "局所免疫療法で使用される「SADBE」の薬剤管理について、教科書で推奨される保存・取り扱いの注意点はどれですか？",
+                options: [
+                    { text: "直射日光に当てて保管する", isCorrect: false, rationale: "薬剤の変質を招くため適切ではありません。" },
+                    { text: "加水分解を防ぐため、湿度の低い環境で遮光保存し、6ヶ月おきに調製し直す", isCorrect: true, rationale: "正解です。SADBEは湿気で分解しやすいため、適切な保管と定期的な再調製が必要です。" },
+                    { text: "水に溶かして常温で 1年 放置してよい", isCorrect: false, rationale: "水溶液は不安定であり、1年も効果を維持できません。" },
+                    { text: "金属製の容器に入れて密封する", isCorrect: false, rationale: "金属と反応する可能性があるため、通常は遮光瓶（ガラス）を用います。" }
+                ]
+            },
+            {
+                q: "ステロイド局所注射療法において、1 回の受診におけるトリアムシノロンアセトニドの総投与量の限度目安は？",
+                options: [
+                    { text: "1 mg", isCorrect: false, rationale: "少なすぎます。" },
+                    { text: "10 mg", isCorrect: true, rationale: "正解です。副作用の皮膚萎縮や全身への影響を考慮し、1回10mg程度を限度の目安とします。" },
+                    { text: "50 mg", isCorrect: false, rationale: "多すぎます。全身的なステロイド副作用を誘発する恐れがあります。" },
+                    { text: "100 mg", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "重症例において併発しやすい「爪の変化」として、教科書に記載されている典型的な症状はどれですか？",
+                options: [
+                    { text: "爪が真っ黒に変色する", isCorrect: false, rationale: "AAの爪症状としては典型的ではありません。" },
+                    { text: "爪の表面に小さな「点状陥凹」が現れる", isCorrect: true, rationale: "正解です。円形脱毛症の活動期や重症例では、爪に針で刺したような小さな凹みが見られることがよくあります。" },
+                    { text: "爪が急激に伸びる", isCorrect: false, rationale: "間違いです。" },
+                    { text: "爪が完全に消失する", isCorrect: false, rationale: "AAで爪そのものがなくなることはありません。" }
+                ]
+            },
+            {
+                q: "円形脱毛症の「予後（治癒率）」について、アトピー性疾患等の既往のない「単発型」患者が 1 年以内に回復する割合は？",
+                options: [
+                    { text: "約 10 %", isCorrect: false, rationale: "少なすぎます。単発型の予後は良好です。" },
+                    { text: "約 30 %", isCorrect: false, rationale: "間違いです。" },
+                    { text: "約 50 %", isCorrect: false, rationale: "間違いです。これよりも高い確率で治癒します。" },
+                    { text: "約 80 %", isCorrect: true, rationale: "正解です。単発型で特に合併症のない場合、8割程度の患者は1年以内に毛髪が回復することが期待できます。" }
+                ]
+            },
+            {
+                q: "JAK阻害薬「バリシチニブ」の内服治療中、副作用として「最も警戒すべき」感染症はどれですか？",
+                options: [
+                    { text: "足白癬（水虫）", isCorrect: false, rationale: "日常的な注意は必要ですが、JAK阻害薬特有の重大な警戒項目ではありません。" },
+                    { text: "帯状疱疹", isCorrect: true, rationale: "正解です。免疫反応の抑制により、潜伏していたウイルスの再活性化リスクが高まるため、神経痛等の兆候に厳重な注意を要します。" },
+                    { text: "風邪（上気道炎）", isCorrect: false, rationale: "頻度は高いですが、重症化リスクとしては帯状疱疹などの特異的ウイルス感染の方が管理上重要です。" },
+                    { text: "ニキビ（痤瘡）", isCorrect: false, rationale: "副作用として現れることはありますが、感染症としての生命や重篤度への影響は低いです。" }
+                ]
+            },
+            {
+                q: "脱毛が急速進行している症例のうち、治療介入せずとも自然治癒する可能性がある「Acute diffuse and total alopecia」の特徴は？",
+                options: [
+                    { text: "抜毛テストで成長期毛が大量に抜ける", isCorrect: false, rationale: "自然治癒型では主に休止期毛（棍毛）が抜去されるのが特徴です。" },
+                    { text: "頭皮の激しい痛みと紅斑がある", isCorrect: false, rationale: "この型は自覚症状（痛み・痒み）を欠くことが多いです。" },
+                    { text: "抜毛テストで休止期毛（棍毛）が抜け、トリコスコピーで短軟毛が早期に確認できる", isCorrect: true, rationale: "正解です。急速に抜けますが再生の兆候が早く現れるため、慎重な経過観察で治癒に向かうことがあります。" },
+                    { text: "全身の毛が同時に全て抜ける", isCorrect: false, rationale: "それは汎発型への移行を示唆し、自然治癒型とは経過が異なります。" }
+                ]
+            },
+            {
+                q: "局所免疫療法において、最初の「感作（アレルギー反応を覚えさせる作業）」を行う際の適切な部位は？",
+                options: [
+                    { text: "顔面", isCorrect: false, rationale: "色素沈着や強い紅斑が目立つため避けるべきです。" },
+                    { text: "前腕の屈側", isCorrect: false, rationale: "露出部であり、接触皮膚炎の痕が残るリスクを考慮すると第一選択ではありません。" },
+                    { text: "頭部の脱毛部位（ウィッグ等で隠れる場所）", isCorrect: true, rationale: "正解です。万が一強い反応や色素沈着が生じても、被覆可能な部位で感作させるのが臨床上の鉄則です。" },
+                    { text: "足の裏", isCorrect: false, rationale: "吸収が悪く、感作部位としては適切ではありません。" }
+                ]
+            },
+            {
+                q: "かつら（ウィッグ）の使用について、ガイドライン 2024 での推奨度と意義として正しいものはどれですか？",
+                options: [
+                    { text: "推奨度 3：治療を妨げるため行わない方がよい", isCorrect: false, rationale: "間違いです。ウィッグは病勢を悪化させないことが証明されています。" },
+                    { text: "推奨度 1：QOL 改善のために使用を希望する患者には勧める", isCorrect: true, rationale: "正解です。アピアランスを整えることは患者の社会生活を助け、心理的苦痛を大きく和らげます。" },
+                    { text: "推奨度 2：毛穴が塞がるため、週 1 回のみ許可する", isCorrect: false, rationale: "間違いです。使用頻度に制限を設ける医学的根拠はありません。" },
+                    { text: "推奨度 3：高価なため、医師からは一切勧めない", isCorrect: false, rationale: "間違いです。情報の提供は看護上も重要です。" }
+                ]
+            },
+            {
+                q: "円形脱毛症の発症メカニズムにおいて、主要な攻撃対象となっているのはどの部位ですか？",
+                options: [
+                    { text: "休止期の毛包", isCorrect: false, rationale: "間違いです。攻撃の標的は成長期の毛包です。" },
+                    { text: "成長期の毛包（毛球部周囲）", isCorrect: true, rationale: "正解です。成長期の毛包周囲にリンパ球が浸潤し、免疫寛容が破綻して攻撃されることで脱毛が生じます。" },
+                    { text: "皮脂腺", isCorrect: false, rationale: "皮脂腺は標的ではありません。" },
+                    { text: "立毛筋", isCorrect: false, rationale: "筋肉への攻撃ではありません。" }
+                ]
+            },
+            {
+                q: "紫外線療法（エキシマライト等）の実施に際し、照射量の決定基準として正しい手順はどれですか？",
+                options: [
+                    { text: "最初から最強のパワーで照射する", isCorrect: false, rationale: "重度の火傷（紅斑）を引き起こすため極めて危険です。" },
+                    { text: "原則として 1/2 MED から開始し、淡い紅斑が出るまで増量する", isCorrect: true, rationale: "正解です。患者個々の感受性に合わせ、安全な範囲から徐々に有効量まで調整します。" },
+                    { text: "皮膚が真っ黒になるまで照射を続ける", isCorrect: false, rationale: "強い色素沈着を目的とする治療ではありません。" },
+                    { text: "紅斑が全く出ない程度の極微量を維持する", isCorrect: false, rationale: "有効量に達せず、十分な効果が得られません。" }
+                ]
+            },
+            {
+                q: "JAK阻害薬の内服期間中、効果判定を行うまでに「最低限」継続すべき期間の目安はどれですか？",
+                options: [
+                    { text: "1 週間", isCorrect: false, rationale: "短すぎます。発毛の変化は認められません。" },
+                    { text: "1 ヶ月", isCorrect: false, rationale: "不十分です。臨床試験のデータからも数ヶ月の継続が必要です。" },
+                    { text: "6 〜 9 ヶ月 (36〜48週)", isCorrect: true, rationale: "正解です。ガイドラインでは約半年〜9ヶ月間継続しても反応がない場合は中止を考慮するとしています。" },
+                    { text: "10 年 以上", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "「アトピー素因」を持つ円形脱毛症患者において、臨床上注意すべき特性はどれですか？",
+                options: [
+                    { text: "必ず 1 ヶ月で完治する", isCorrect: false, rationale: "間違いです。" },
+                    { text: "重症化しやすく、多発型や全頭型へ移行するリスクが高い傾向がある", isCorrect: true, rationale: "正解です。アトピー素因の合併は予後不良因子の一つとして挙げられており、注意深い管理が必要です。" },
+                    { text: "髪の毛が全く抜けない", isCorrect: false, rationale: "矛盾しています。" },
+                    { text: "ステロイド薬が一切効かない", isCorrect: false, rationale: "効きにくいことはありますが、「一切効かない」わけではありません。" }
+                ]
+            },
+            {
+                q: "円形脱毛症において、心理的ケア（カウンセリング等）が考慮される主な目的は何ですか？",
+                options: [
+                    { text: "ストレスをなくせば 100% 髪が生えるから", isCorrect: false, rationale: "ストレスは誘因の一つですが、解消だけで発毛するとは限りません。" },
+                    { text: "疾患によるボディイメージの変化や社会生活での精神的苦痛を軽減し、QOL を維持するため", isCorrect: true, rationale: "正解です。脱毛症状による精神的ダメージは大きく、それ自体へのケアが全人的看護として重要です。" },
+                    { text: "患者を黙らせるため", isCorrect: false, rationale: "不適切です。" },
+                    { text: "治療費を安く抑えるため", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "最後に、円形脱毛症の看護において「移行期医療（思春期から成人への支援）」の最も大切な視点は？",
+                options: [
+                    { text: "親にすべての処置を任せる", isCorrect: false, rationale: "思春期以降は自立を促すべきであり、親任せは望ましくありません。" },
+                    { text: "患者自身が疾患を正しく理解し、自律的に治療やウィッグ等の管理を選択できるよう支援する", isCorrect: true, rationale: "正解です。本人が主体となって疾患と向き合い、生活を管理できる「自立」を支えるのが看護のゴールです。" },
+                    { text: "一生病院から離れないようにする", isCorrect: false, rationale: "不適切な依存は避けるべきです。" },
+                    { text: "外用薬を勝手にやめていいと教える", isCorrect: false, rationale: "不適切な自己中断は悪化を招くため、正しい知識を提供します。" }
+                ]
+            }
+        ];
+
+        const quiz = {
+            currentIdx: 0,
+            score: 0,
+            userAnswers: new Array(quizData.length).fill(null),
+            scoredQuestions: new Set(),
+            
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                this.render();
+            },
+            
+            render() {
+                const q = quizData[this.currentIdx];
+                document.getElementById('progress-text').innerText = `Question ${this.currentIdx + 1} / ${quizData.length}`;
+                document.getElementById('progress-bar').style.width = `${((this.currentIdx + 1) / quizData.length) * 100}%`;
+                
+                const prevBtn = document.getElementById('global-prev-btn');
+                if (this.currentIdx > 0) prevBtn.classList.remove('invisible');
+                else prevBtn.classList.add('invisible');
+                
+                document.getElementById('question-text').innerHTML = this.wrapGlossaryTerms(q.q);
+                
+                const optionsDiv = document.getElementById('options');
+                optionsDiv.innerHTML = '';
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all duration-200 font-medium text-sm sm:text-base shadow-sm leading-snug";
+                    btn.innerText = `${i + 1}. ${opt.text}`;
+                    btn.onclick = () => this.showRationale(i);
+                    optionsDiv.appendChild(btn);
+                });
+                
+                document.getElementById('explanation-box').classList.add('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+                
+                if (this.userAnswers[this.currentIdx] !== null) {
+                    this.showRationale(this.userAnswers[this.currentIdx], true);
+                }
+            },
+
+            wrapGlossaryTerms(text) {
+                let html = text;
+                const sortedTerms = Object.keys(glossary).sort((a, b) => b.length - a.length);
+                sortedTerms.forEach(term => {
+                    const regex = new RegExp(term, 'g');
+                    if (html.indexOf(term) !== -1 && !html.includes(`>${term}<`)) {
+                        html = html.split(term).join(`<span class="glossary-term" onclick="openGlossary('${term}')">${term}</span>`);
+                    }
+                });
+                return html;
+            },
+            
+            showRationale(idx, isReview = false) {
+                const q = quizData[this.currentIdx];
+                const opt = q.options[idx];
+                const expBox = document.getElementById('explanation-box');
+                const header = document.getElementById('feedback-header');
+                const icon = document.getElementById('status-icon');
+                const statusText = document.getElementById('status-text');
+                const rationaleElem = document.getElementById('rationale-text');
+                const nextBtn = document.getElementById('next-btn');
+                const buttons = document.querySelectorAll('#options button');
+
+                if (!isReview && !this.scoredQuestions.has(this.currentIdx)) {
+                    this.userAnswers[this.currentIdx] = idx;
+                    if (opt.isCorrect) this.score++;
+                    this.scoredQuestions.add(this.currentIdx);
+                } else if (!isReview) {
+                    this.userAnswers[this.currentIdx] = idx;
+                }
+
+                buttons.forEach((btn, i) => {
+                    btn.classList.remove('correct-btn', 'wrong-btn', 'ring-2', 'ring-indigo-500', 'neutral-btn');
+                    if (q.options[i].isCorrect) btn.classList.add('correct-btn');
+                    else btn.classList.add('neutral-btn');
+                });
+                
+                if (!opt.isCorrect) {
+                    buttons[idx].classList.remove('neutral-btn');
+                    buttons[idx].classList.add('wrong-btn');
+                    icon.innerText = "🔍 解説";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-red-600";
+                } else {
+                    icon.innerText = "✨ 正解の根拠";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-green-600";
+                }
+                
+                buttons[idx].classList.add('ring-2', 'ring-indigo-500');
+                rationaleElem.innerHTML = this.wrapGlossaryTerms(opt.rationale);
+                expBox.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                
+                if (!isReview) {
+                    setTimeout(() => {
+                        expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }
+            },
+            
+            next() {
+                this.currentIdx++;
+                if(this.currentIdx < quizData.length) {
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    this.showResult();
+                }
+            },
+
+            prev() {
+                if (this.currentIdx > 0) {
+                    this.currentIdx--;
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+            
+            showResult() {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('score-display').innerText = this.score;
+                
+                let msg = "";
+                if(this.score === 20) msg = "完璧です！あなたは最新の円形脱毛症診療を支える真のエキスパート看護師です。";
+                else if(this.score >= 16) msg = "素晴らしい！最新薬から従来の免疫療法まで、高度な知識をしっかりとお持ちです。";
+                else if(this.score >= 12) msg = "合格点です。いくつか紛らわしい所見（トリコスコピー等）で迷ったかもしれません。解説を再確認しましょう。";
+                else msg = "お疲れ様でした。実務レベルの高度な内容ですので、問題文や解説の用語をタップして、最新ガイドラインを再学習してみてください。";
+                
+                document.getElementById('result-message').innerText = msg;
+            }
+        };
+
+        function openGlossary(term) {
+            document.getElementById('glossary-title').innerText = term;
+            document.getElementById('glossary-body').innerText = glossary[term];
+            document.getElementById('glossary-modal').classList.remove('hidden');
+        }
+
+        function closeGlossary() {
+            document.getElementById('glossary-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+```

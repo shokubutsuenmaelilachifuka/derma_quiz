@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>接触皮膚炎・初級スタッフ研修クイズ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .correct-btn { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong-btn { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .neutral-btn { background-color: #f8fafc !important; border-color: #e2e8f0 !important; color: #64748b !important; }
+        .glossary-term { color: #4f46e5; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .glossary-term:hover { color: #3730a3; background-color: #eef2ff; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+    <div id="app" class="max-w-2xl mx-auto px-4 py-8">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4">接触皮膚炎（かぶれ）のきほん<br>初級スタッフ研修テスト（20問）</h1>
+            <p class="text-slate-600 mb-8 leading-relaxed text-sm">
+                患者様への説明にも役立つ、基本の知識を学びましょう。<br>
+                わからない言葉は<span class="glossary-term">青い文字</span>をタップして意味を確認！
+            </p>
+            <button onclick="quiz.start()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-12 rounded-full transition-all shadow-md">
+                テストを開始する
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <button id="global-prev-btn" onclick="quiz.prev()" class="text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 invisible">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    前へ
+                </button>
+                <span id="progress-text" class="text-sm font-medium text-slate-500">Question 1 / 20</span>
+                <div class="w-1/2 bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="question-container" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in mb-6">
+                <h2 id="question-text" class="text-lg font-bold mb-6 leading-relaxed text-slate-800">問題文</h2>
+                <div id="options" class="space-y-3">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+
+            <!-- Detailed Explanation Area -->
+            <div id="explanation-box" class="hidden p-6 rounded-2xl mb-6 fade-in border bg-white shadow-sm border-indigo-100">
+                <div id="feedback-header" class="flex items-center gap-2 mb-2 font-bold">
+                    <span id="status-icon"></span>
+                    <span id="status-text"></span>
+                </div>
+                <div id="rationale-text" class="text-slate-700 text-sm leading-relaxed mb-4"></div>
+                <p class="text-[10px] text-slate-400 mb-4 font-medium italic">※他の選択肢ボタンをタップすると、その解説も確認できます。</p>
+                
+                <div class="flex gap-3">
+                    <button id="next-btn" onclick="quiz.next()" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition-colors hidden shadow-lg shadow-indigo-100">
+                        次の問題へ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-bold mb-4 text-slate-800">お疲れ様でした！</h2>
+            <div class="text-6xl font-black text-indigo-600 mb-4"><span id="score-display">0</span> / 20</div>
+            <p id="result-message" class="text-slate-600 mb-8 leading-relaxed"></p>
+            <button onclick="location.reload()" class="bg-slate-800 text-white py-3 px-10 rounded-full font-bold">
+                もう一度最初から挑戦する
+            </button>
+        </div>
+    </div>
+
+    <!-- 用語解説モーダル -->
+    <div id="glossary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl fade-in overflow-y-auto max-h-[90vh]">
+            <h3 id="glossary-title" class="text-lg font-bold text-indigo-700 mb-3 border-b pb-2">用語解説</h3>
+            <p id="glossary-body" class="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap"></p>
+            <button onclick="closeGlossary()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 rounded-xl transition-colors">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const glossary = {
+            "接触皮膚炎": "（せっしょくひふえん）いわゆる「かぶれ」のこと。外部から触れた物質によって、皮膚が赤くなったり、かゆくなったりする湿疹性の反応です。",
+            "アレルギー性接触皮膚炎": "特定の物質（アレルゲン）に対して、体が過剰に反応してしまうタイプのかぶれ。一度記憶（感作）されると、微量でも触れるだけでかぶれてしまいます。",
+            "刺激性接触皮膚炎": "物質が持つ「毒性」や「刺激」によって、誰にでも起こりうるかぶれ。アレルギー体質は関係なく、強い洗剤や酸、アルカリなどで起こります。",
+            "Ⅳ型アレルギー": "（よんがたあれるぎー）遅延型アレルギーとも呼ばれます。原因に触れてから半日から2日ほど経ってから症状が出るのが特徴です。接触皮膚炎の多くはこのタイプです。",
+            "パッチテスト": "かぶれの原因を特定するための最も正確な検査。疑わしい物質を専用のシールで背中などに貼り、一定時間後の反応を観察します。",
+            "惹起相": "（じゃっきそう）すでにアレルギーを持っている人が、再びその原因物質に触れて湿疹が出る段階のことです。",
+            "ハプテン": "分子量がとても小さく、単独ではアレルギーを起こさない物質。皮膚の中でタンパク質と合体して初めてアレルギーの原因（抗原）になります。",
+            "PPD": "パラフェニレンジアミン。ヘアカラー（染毛剤）に含まれる代表的な原因物質です。強いアレルギーを起こしやすく、重症化することもあります。",
+            "光接触皮膚炎": "（ひかりせっしょくひふえん）原因となる物質が皮膚に付いた状態で、「日光（紫外線）」を浴びることで初めて起こるかぶれです。",
+            "ROAT": "（ロート）パッチテストが難しい場合や、製品そのものの影響を診たいときに、腕などに1日2回、一定期間製品を塗って様子を見る検査方法です。",
+            "撒布疹": "（さっぷしん）強いかぶれが起きた場所から、原因物質が血液に乗って広がり、全身にポツポツとした湿疹が出ることです。",
+            "全身性接触皮膚炎": "過去に皮膚からアレルギーになった物質を、食べたり注射したりして体の中に入れることで、全身に湿疹が出る状態です。",
+            "湿疹三角": "（しっしんさんかく）湿疹が、赤み→ぶつぶつ→水ぶくれ→かさぶた→治癒、という段階をたどる経過を模式的に表したものです。",
+            "JSA": "日本人がかぶれやすい代表的な20数種類のアレルゲンのセット。パッチテストで原因を探す際によく使われます。",
+            "手湿疹": "（てしっしん）家事や仕事で水や洗剤を頻繁に使うことで、手のバリア機能が壊れて起こる湿疹。刺激性が主な原因です。"
+        };
+
+        const quizData = [
+            {
+                q: "「接触皮膚炎」という言葉の、一般的な呼び方は何ですか？",
+                options: [
+                    { text: "蕁麻疹（じんましん）", isCorrect: false, rationale: "蕁麻疹は短時間で消える「みみず腫れ」を指し、接触皮膚炎とは機序が異なります。" },
+                    { text: "かぶれ", isCorrect: true, rationale: "正解です。外部から何かが触れて皮膚が荒れることを、医学用語で接触皮膚炎と呼びます。" },
+                    { text: "水虫（みずむし）", isCorrect: false, rationale: "水虫は白癬菌というカビが原因の感染症です。" },
+                    { text: "しもやけ", isCorrect: false, rationale: "しもやけは寒さによる血行障害です。" }
+                ]
+            },
+            {
+                q: "強力な洗剤やアルカリ性物質に触れた際、アレルギー体質に関わらず誰にでも起こるかぶれを何と呼びますか？",
+                options: [
+                    { text: "アレルギー性接触皮膚炎", isCorrect: false, rationale: "これは特定の物質に敏感な体質の人だけに起こるタイプです。" },
+                    { text: "刺激性接触皮膚炎", isCorrect: true, rationale: "正解です。物質自体の刺激や毒性によって誰にでも起こるのが特徴です。" },
+                    { text: "アトピー性皮膚炎", isCorrect: false, rationale: "体質的な要因が大きい慢性の湿疹です。" },
+                    { text: "光線過敏症", isCorrect: false, rationale: "日光そのものへの過剰な反応です。" }
+                ]
+            },
+            {
+                q: "かぶれの原因を突き止めるために、背中などにシールを貼って行う検査の名前は何ですか？",
+                options: [
+                    { text: "パッチテスト", isCorrect: true, rationale: "正解です。疑わしい物質を皮膚に貼り、時間をおいて反応を確認する、接触皮膚炎の基本となる検査です。" },
+                    { text: "血液検査（IgE）", isCorrect: false, rationale: "血液検査はアレルギー体質の有無はわかりますが、どのかぶれ物質が原因かまでは特定できません。" },
+                    { text: "視力検査", isCorrect: false, rationale: "目に関する検査です。" },
+                    { text: "ダーモスコピー", isCorrect: false, rationale: "ホクロやシミを拡大して見る検査です。" }
+                ]
+            },
+            {
+                q: "パッチテストのシールを貼ってから、最初の判定を行うまでの時間は通常どれくらいですか？",
+                options: [
+                    { text: "15 分後", isCorrect: false, rationale: "これは蕁麻疹などの即時型アレルギーを診る際の時間です。" },
+                    { text: "48 時間後", isCorrect: true, rationale: "正解です。シールを貼ってから2日（48時間）後に剥がし、最初の判定を行うのが標準的です。" },
+                    { text: "1 ヶ月後", isCorrect: false, rationale: "遅すぎます。反応は既に消えてしまっています。" },
+                    { text: "1 年後", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "パッチテストの期間中、患者さんが守らなければならない重要な注意点はどれですか？",
+                options: [
+                    { text: "水を 1 日 3 リットル飲むこと", isCorrect: false, rationale: "水分摂取量は判定に関係ありません。" },
+                    { text: "シールを濡らしたり剥がしたりせず、入浴も控えること", isCorrect: true, rationale: "正解です。シールが剥がれたり成分が流れたりすると正しい判定ができないため、最初の判定まで背中を濡らさないようにします。" },
+                    { text: "毎日 激しい運動 をすること", isCorrect: false, rationale: "汗でシールが剥がれる可能性があるため、激しい運動は避けるべきです。" },
+                    { text: "直射日光 に背中を当て続けること", isCorrect: false, rationale: "日焼けは皮膚の反応を抑えてしまい、判定を狂わせる可能性があります。" }
+                ]
+            },
+            {
+                q: "アレルギー性接触皮膚炎は、原因物質に触れてから症状が出るまでどれくらいの時間がかかりますか？",
+                options: [
+                    { text: "数分 〜 数十分", isCorrect: false, rationale: "これは蕁麻疹などの即時型アレルギーの特徴です。" },
+                    { text: "半日 〜 2 日（24〜48時間）", isCorrect: true, rationale: "正解です。遅延型（Ⅳ型）アレルギーと呼ばれる反応で、時間が経ってから症状のピークが来ます。" },
+                    { text: "1 週間", isCorrect: false, rationale: "通常はそこまで時間はかかりません。" },
+                    { text: "10 年", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "ヘアカラー（染毛剤）に含まれることが多く、強いアレルギーを起こしやすいことで有名な物質の名前は何ですか？",
+                options: [
+                    { text: "ビタミン C", isCorrect: false, rationale: "体に良い栄養素であり、ヘアカラーの主原因物質ではありません。" },
+                    { text: "PPD（パラフェニレンジアミン）", isCorrect: true, rationale: "正解です。非常に強いアレルギー誘発性を持ち、顔がパンパンに腫れるほどの重症かぶれを起こすこともあります。" },
+                    { text: "お砂糖", isCorrect: false, rationale: "食品です。" },
+                    { text: "水道水", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "湿布薬（ケトプロフェンなど）を貼った場所に、日光（紫外線）が当たることで起こるかぶれを何と呼びますか？",
+                options: [
+                    { text: "食中毒", isCorrect: false, rationale: "食べ物が原因の病気です。" },
+                    { text: "光接触皮膚炎", isCorrect: true, rationale: "正解です。特定の物質＋光の刺激が揃うことで発症します。湿布を剥がした数日後に日が当たって赤くなることもあります。" },
+                    { text: "ニキビ", isCorrect: false, rationale: "毛穴の炎症です。" },
+                    { text: "水虫", isCorrect: false, rationale: "カビによる感染です。" }
+                ]
+            },
+            {
+                q: "日本で最もパッチテストの陽性率が高く、ピアスや時計などでかぶれの原因になりやすい金属は何ですか？",
+                options: [
+                    { text: "ニッケル", isCorrect: true, rationale: "正解です。アクセサリーやコインなどに広く含まれており、金属アレルギーの原因として最も頻度が高い物質です。" },
+                    { text: "プラスチック", isCorrect: false, rationale: "金属ではありません。" },
+                    { text: "ダイヤモンド", isCorrect: false, rationale: "純粋なダイヤでアレルギーが起きることは極めて稀です。" },
+                    { text: "アルミニウム", isCorrect: false, rationale: "アレルギーを起こすことはありますが、ニッケルほど頻度は高くありません。" }
+                ]
+            },
+            {
+                q: "「刺激性」の手湿疹を予防するために、家事などで手袋を使う際の正しい指導はどれですか？",
+                options: [
+                    { text: "素手で洗剤を使い、終わってから消毒する", isCorrect: false, rationale: "アルコール消毒は皮膚の油分を奪い、さらに悪化させます。" },
+                    { text: "ゴム手袋の下に、木綿（コットン）の手袋をはめる", isCorrect: true, rationale: "正解です。ゴム手袋内の蒸れや刺激を綿手袋が吸収してくれるため、バリア機能を守ることができます。" },
+                    { text: "手袋は一生変えない", isCorrect: false, rationale: "不衛生であり、劣化により洗剤が染み込む危険があります。" },
+                    { text: "手袋を二重にするときは、上が綿にする", isCorrect: false, rationale: "上がゴムやビニールの防水性でなければ意味がありません。" }
+                ]
+            },
+            {
+                q: "ウルシなどの植物に触れたあと、時間が経ってから水ぶくれができるタイプのアレルギーは何型ですか？",
+                options: [
+                    { text: "Ⅰ 型（即時型）", isCorrect: false, rationale: "すぐに蕁麻疹が出るタイプです。" },
+                    { text: "Ⅳ 型（遅延型）", isCorrect: true, rationale: "正解です。接触皮膚炎の標準的な仕組みで、時間が経ってからゆっくり症状が出るタイプです。" },
+                    { text: "血液型", isCorrect: false, rationale: "アレルギーの分類ではありません。" },
+                    { text: "新型", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "過去に「ウルシ」でかぶれたことがある人が、似た成分を含む「マンゴー」を食べて全身に湿疹が出る現象を何と呼びますか？",
+                options: [
+                    { text: "風邪", isCorrect: false, rationale: "ウイルス感染症です。" },
+                    { text: "全身性接触皮膚炎", isCorrect: true, rationale: "正解です。皮膚から入ったアレルギー物質を、後から口（食事）などで体に入れることで全身が反応してしまう状態です。" },
+                    { text: "寝違え", isCorrect: false, rationale: "間違いです。" },
+                    { text: "日光湿疹", isCorrect: false, rationale: "日光への反応です。" }
+                ]
+            },
+            {
+                q: "パッチテストの結果、「金（ゴールド）」や一部の抗菌薬の反応が遅れて出ることがあります。そのため推奨される最終判定の日はいつですか？",
+                options: [
+                    { text: "翌日", isCorrect: false, rationale: "早すぎます。反応が出ていないことが多いです。" },
+                    { text: "3 日目", isCorrect: false, rationale: "多くの物質はこの日でわかりますが、金などはまだ不十分なことがあります。" },
+                    { text: "7 日目（1週間後）", isCorrect: true, rationale: "正解です。金や抗菌薬の中には、1週間経ってから陽性（赤み）が出るものがあるため、最終確認が必要です。" },
+                    { text: "1 年後", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "かぶれを早く治すために、クリニックで処方される最も一般的なお薬の種類は何ですか？",
+                options: [
+                    { text: "ステロイド外用薬", isCorrect: true, rationale: "正解です。皮膚の強い炎症を抑えるために、適切な強さのステロイド薬が使われます。" },
+                    { text: "痛み止め の 飲み薬", isCorrect: false, rationale: "痛みは和らげますが、湿疹そのものを治す主力ではありません。" },
+                    { text: "睡眠薬", isCorrect: false, rationale: "眠りを助けますが、皮膚の炎症を抑えるお薬ではありません。" },
+                    { text: "目薬", isCorrect: false, rationale: "目のお薬です。" }
+                ]
+            },
+            {
+                q: "手を洗う際、手湿疹やかぶれのある患者さんにアドバイスすべき適切な温度は？",
+                options: [
+                    { text: "10 ℃ 以下の氷水", isCorrect: false, rationale: "冷たすぎると血管の反動でかゆみが強まることがあります。" },
+                    { text: "38 〜 40 ℃ 前後のぬるま湯", isCorrect: true, rationale: "正解です。熱すぎると皮脂を奪い、冷たすぎると汚れが落ちにくいため、肌に優しいぬるま湯が推奨されます。" },
+                    { text: "45 ℃ 以上の熱いお湯", isCorrect: false, rationale: "熱いお湯は皮膚のバリアである皮脂を根こそぎ奪い、かゆみを激化させるため避けるべきです。" },
+                    { text: "沸騰したお湯", isCorrect: false, rationale: "火傷してしまいます！" }
+                ]
+            },
+            {
+                q: "「アレルギー性接触皮膚炎」の最大の特徴は、どのような接触で症状が出ることですか？",
+                options: [
+                    { text: "バケツ一杯 の 原液 を浴びること", isCorrect: false, rationale: "刺激性ならこれでも起きますが、アレルギー性の特徴はそこではありません。" },
+                    { text: "ごく微量 の 物質 が触れるだけでも発症すること", isCorrect: true, rationale: "正解です。一度アレルギーになると、目に見えないほどの少量が触れただけでも、激しいかゆみや湿疹が出てしまいます。" },
+                    { text: "10 年間 ずっと触れ続けること", isCorrect: false, rationale: "そんなに長くかからず、通常は感作（記憶）されればすぐに起きます。" },
+                    { text: "血液型 が 変わるまで触れること", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "パッチテストを行いたい被疑物質が「pH 1（強酸）」や「pH 14（強アルカリ）」だった場合、通常はどうしますか？",
+                options: [
+                    { text: "そのまま背中に貼り付ける", isCorrect: false, rationale: "強酸や強アルカリを貼ると、化学熱傷（ヤケド）を起こしてしまい、大変危険です。" },
+                    { text: "適切な濃度まで薄めるか、テスト自体を控える", isCorrect: true, rationale: "正解です。ガイドラインでは皮膚を壊してしまうような強い薬品は、安全な濃度に調整するか実施を控えるよう定められています。" },
+                    { text: "ドライヤーで乾かしてから貼る", isCorrect: false, rationale: "pHは変わらないため危険です。" },
+                    { text: "10 倍の厚みで塗り込む", isCorrect: false, rationale: "さらに危険になります。" }
+                ]
+            },
+            {
+                q: "接触皮膚炎は「他の人にうつる」病気ですか？",
+                options: [
+                    { text: "はい、握手でうつる", isCorrect: false, rationale: "間違いです。" },
+                    { text: "いいえ、全くうつらない", isCorrect: true, rationale: "正解です。自分の体の免疫反応や、物質の刺激によるものなので、他人へ感染することはありません。" },
+                    { text: "はい、同じ服を着るとうつる", isCorrect: false, rationale: "間違いです。ただし、服にアレルギー物質が付着していれば、それを着た人が「かぶれる」ことはあります（うつるのとは違います）。" },
+                    { text: "プールの水でうつる", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "パッチテストの剥離直後（シールを剥がしてすぐ）の判定で、気をつけるべきことは？",
+                options: [
+                    { text: "すぐに 100 点満点 で採点すること", isCorrect: false, rationale: "間違いです。" },
+                    { text: "テープの圧迫による一時的な赤み（判定の邪魔）が消えるまで 20〜30 分待つこと", isCorrect: true, rationale: "正解です。剥がした直後は誰でも赤くなっていることがあるため、少し時間をおいてから本当の反応を診ます。" },
+                    { text: "背中を力いっぱい叩いて刺激すること", isCorrect: false, rationale: "正しい判定ができなくなるため不適切です。" },
+                    { text: "すぐに お風呂 に入れること", isCorrect: false, rationale: "まだ判定が続くため、濡らしてはいけません。" }
+                ]
+            },
+            {
+                q: "最後に、接触皮膚炎を「根本から治す（根治）」ために最も大切なことは何ですか？",
+                options: [
+                    { text: "お薬を一生飲み続けること", isCorrect: false, rationale: "お薬は炎症を抑えるもので、根本的な解決（体質を変えること）は難しいです。" },
+                    { text: "原因となっている物質（アレルゲン）を特定し、それを「除去・回避」すること", isCorrect: true, rationale: "正解です。かぶれの原因さえ避ければ、お薬を使わなくても二度と発症しません。これが接触皮膚炎治療のゴールです。" },
+                    { text: "体を 1 日 10 回洗うこと", isCorrect: false, rationale: "洗いすぎはバリアを壊し、逆効果です。" },
+                    { text: "とにかく我慢すること", isCorrect: false, rationale: "間違いです。" }
+                ]
+            }
+        ];
+
+        const quiz = {
+            currentIdx: 0,
+            score: 0,
+            userAnswers: new Array(quizData.length).fill(null),
+            scoredQuestions: new Set(),
+            
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                this.render();
+            },
+            
+            render() {
+                const q = quizData[this.currentIdx];
+                document.getElementById('progress-text').innerText = `Question ${this.currentIdx + 1} / ${quizData.length}`;
+                document.getElementById('progress-bar').style.width = `${((this.currentIdx + 1) / quizData.length) * 100}%`;
+                
+                const prevBtn = document.getElementById('global-prev-btn');
+                if (this.currentIdx > 0) prevBtn.classList.remove('invisible');
+                else prevBtn.classList.add('invisible');
+                
+                document.getElementById('question-text').innerHTML = this.wrapGlossaryTerms(q.q);
+                
+                const optionsDiv = document.getElementById('options');
+                optionsDiv.innerHTML = '';
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all duration-200 font-medium text-sm sm:text-base shadow-sm leading-snug";
+                    btn.innerText = `${i + 1}. ${opt.text}`;
+                    btn.onclick = () => this.showRationale(i);
+                    optionsDiv.appendChild(btn);
+                });
+                
+                document.getElementById('explanation-box').classList.add('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+                
+                if (this.userAnswers[this.currentIdx] !== null) {
+                    this.showRationale(this.userAnswers[this.currentIdx], true);
+                }
+            },
+
+            wrapGlossaryTerms(text) {
+                let html = text;
+                const sortedTerms = Object.keys(glossary).sort((a, b) => b.length - a.length);
+                sortedTerms.forEach(term => {
+                    const regex = new RegExp(term, 'g');
+                    if (html.indexOf(term) !== -1 && !html.includes(`>${term}<`)) {
+                        html = html.split(term).join(`<span class="glossary-term" onclick="openGlossary('${term}')">${term}</span>`);
+                    }
+                });
+                return html;
+            },
+            
+            showRationale(idx, isReview = false) {
+                const q = quizData[this.currentIdx];
+                const opt = q.options[idx];
+                const expBox = document.getElementById('explanation-box');
+                const header = document.getElementById('feedback-header');
+                const icon = document.getElementById('status-icon');
+                const text = document.getElementById('status-text');
+                const rationaleElem = document.getElementById('rationale-text');
+                const nextBtn = document.getElementById('next-btn');
+                const buttons = document.querySelectorAll('#options button');
+
+                if (!isReview && !this.scoredQuestions.has(this.currentIdx)) {
+                    this.userAnswers[this.currentIdx] = idx;
+                    if (opt.isCorrect) this.score++;
+                    this.scoredQuestions.add(this.currentIdx);
+                } else if (!isReview) {
+                    this.userAnswers[this.currentIdx] = idx;
+                }
+
+                buttons.forEach((btn, i) => {
+                    btn.classList.remove('correct-btn', 'wrong-btn', 'ring-2', 'ring-indigo-500', 'neutral-btn');
+                    if (q.options[i].isCorrect) btn.classList.add('correct-btn');
+                    else btn.classList.add('neutral-btn');
+                });
+                
+                if (!opt.isCorrect) {
+                    buttons[idx].classList.remove('neutral-btn');
+                    buttons[idx].classList.add('wrong-btn');
+                    icon.innerText = "❌ ざんねん...";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-red-600";
+                } else {
+                    icon.innerText = "✅ 正解です！";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-green-600";
+                }
+                
+                buttons[idx].classList.add('ring-2', 'ring-indigo-500');
+                rationaleElem.innerHTML = this.wrapGlossaryTerms(opt.rationale);
+                expBox.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                
+                if (!isReview) {
+                    setTimeout(() => {
+                        expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }
+            },
+            
+            next() {
+                this.currentIdx++;
+                if(this.currentIdx < quizData.length) {
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    this.showResult();
+                }
+            },
+
+            prev() {
+                if (this.currentIdx > 0) {
+                    this.currentIdx--;
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+            
+            showResult() {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('score-display').innerText = this.score;
+                
+                let msg = "";
+                if(this.score === 20) msg = "完璧です！今日からあなたも「かぶれ」の知識バッチリなスタッフですね。素晴らしい！";
+                else if(this.score >= 16) msg = "素晴らしい！基本的なことはほぼすべて理解できています。明日からの患者様への対応に自信を持ってください。";
+                else if(this.score >= 12) msg = "合格点です。いくつか間違いやすいところ（判定時間など）を再確認しておけばバッチリです。";
+                else msg = "お疲れ様でした。まずは「刺激性とアレルギー性の違い」や「パッチテストの流れ」から、もう一度見直してみましょう。";
+                
+                document.getElementById('result-message').innerText = msg;
+            }
+        };
+
+        function openGlossary(term) {
+            document.getElementById('glossary-title').innerText = term;
+            document.getElementById('glossary-body').innerText = glossary[term];
+            document.getElementById('glossary-modal').classList.remove('hidden');
+        }
+
+        function closeGlossary() {
+            document.getElementById('glossary-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+```

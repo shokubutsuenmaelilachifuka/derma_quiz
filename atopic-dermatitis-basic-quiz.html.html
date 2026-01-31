@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アトピー性皮膚炎・初級スタッフ研修クイズ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .correct-btn { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong-btn { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .neutral-btn { background-color: #f8fafc !important; border-color: #e2e8f0 !important; color: #64748b !important; }
+        .glossary-term { color: #4f46e5; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .glossary-term:hover { color: #3730a3; background-color: #eef2ff; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+    <div id="app" class="max-w-2xl mx-auto px-4 py-8">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18s-18.253-19-7.5-18.253" />
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4">アトピー性皮膚炎のきほん<br>初級スタッフ研修クイズ</h1>
+            <p class="text-slate-600 mb-8 leading-relaxed text-sm">
+                最新ガイドラインに基づいた、外来で必須の「きほんの20問」です。<br>
+                青い言葉をタップすると意味が表示されます。
+            </p>
+            <button onclick="quiz.start()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-12 rounded-full transition-all shadow-md">
+                テストを開始する
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <button id="global-prev-btn" onclick="quiz.prev()" class="text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center gap-1 invisible">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    前へ
+                </button>
+                <span id="progress-text" class="text-sm font-medium text-slate-500">Question 1 / 20</span>
+                <div class="w-1/2 bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="question-container" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 fade-in mb-6">
+                <h2 id="question-text" class="text-lg font-bold mb-6 leading-relaxed text-slate-800">問題文</h2>
+                <div id="options" class="space-y-3">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+
+            <!-- Detailed Explanation Area -->
+            <div id="explanation-box" class="hidden p-6 rounded-2xl mb-6 fade-in border bg-white shadow-sm border-indigo-100">
+                <div id="feedback-header" class="flex items-center gap-2 mb-2 font-bold">
+                    <span id="status-icon"></span>
+                    <span id="status-text"></span>
+                </div>
+                <div id="rationale-text" class="text-slate-700 text-sm leading-relaxed mb-4"></div>
+                <p class="text-[10px] text-slate-400 mb-4 font-medium italic">※他の選択肢ボタンをタップすると、その解説も確認できます。</p>
+                
+                <div class="flex gap-3">
+                    <button id="next-btn" onclick="quiz.next()" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition-colors hidden shadow-lg shadow-indigo-100">
+                        次の問題へ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-bold mb-4 text-slate-800">お疲れ様でした！</h2>
+            <div class="text-6xl font-black text-indigo-600 mb-4"><span id="score-display">0</span> / 20</div>
+            <p id="result-message" class="text-slate-600 mb-8 leading-relaxed"></p>
+            <button onclick="location.reload()" class="bg-slate-800 text-white py-3 px-10 rounded-full font-bold">
+                もう一度最初から挑戦する
+            </button>
+        </div>
+    </div>
+
+    <!-- 用語解説モーダル -->
+    <div id="glossary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl fade-in overflow-y-auto max-h-[90vh]">
+            <h3 id="glossary-title" class="text-lg font-bold text-indigo-700 mb-3 border-b pb-2">用語解説</h3>
+            <p id="glossary-body" class="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap"></p>
+            <button onclick="closeGlossary()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 rounded-xl transition-colors">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const glossary = {
+            "アトピー性皮膚炎": "かゆみのある湿疹が、良くなったり悪くなったりを繰り返す病気です。もともとアレルギーを起こしやすい体質（アトピー素因）や、皮膚のバリア機能が弱いことが原因で起こります。",
+            "アトピー素因": "本人や家族が「ぜんそく」「アレルギー性鼻炎・結膜炎」「アトピー性皮膚炎」のいずれかの病気を持っていること、またはアレルギーに関係するIgE抗体を作りやすい体質のことです。",
+            "バリア機能": "皮膚の表面が、外からの刺激（ダニ、ホコリ、細菌など）が入るのを防ぎ、体の中の水分が逃げないように守る役割のことです。アトピーの方ではこの力が弱くなっています。",
+            "フィラグリン": "皮膚の角質細胞の中で、バリア機能を保つために重要な役割を果たすタンパク質です。このタンパク質が不足すると、皮膚が乾燥しやすくなります。",
+            "TARC": "（ターク）血液検査の項目の一つ。皮膚の炎症の強さを数字で表したものです。症状がひどいと高くなり、良くなると低くなるため、治療がうまくいっているかの目安になります。",
+            "プロアクティブ療法": "見た目がきれいになった後も、お薬を急にやめずに、週に数回など定期的に塗り続ける治療法です。火が消えた後の「残り火」を消し続けることで、再発を防ぎます。",
+            "リアクティブ療法": "湿疹が悪くなった時だけお薬を塗り、良くなったらすぐにやめる治療法です。ぶり返し（再発）が多い場合にこの方法だけだと、なかなか安定しません。",
+            "ステロイド外用薬": "湿疹の炎症（赤みや腫れ）を抑える、最も基本的な塗り薬です。強さによって5つのランクに分けられており、症状に合わせて医師が選びます。",
+            "タクロリムス軟膏": "ステロイドとは別の仕組みで炎症を抑える塗り薬です。顔や首の症状に特に効果が高く、長期間塗っても皮膚が薄くなる副作用がないのが特徴です。",
+            "FTU": "（フィンガーチップユニット）お薬を塗る量の目安。人差し指の先から第一関節までお薬を出した量が「手のひら2枚分」の面積に塗る適量です。",
+            "寛解": "（かんかい）病気の症状が落ち着いて、安定している状態のことです。アトピー治療では、この「寛解」を長く維持することが目標になります。",
+            "保湿剤": "皮膚のバリア機能を助け、乾燥を防ぐためのお薬です。ワセリンやヘパリン類似物質などがあります。湿疹がない場所も含めて全身に塗ることが大切です。",
+            "アドヒアランス": "患者様が病気と向き合い、納得して自分から治療（お薬を塗るなど）に取り組むことです。塗り忘れを減らすことが治療成功の鍵です。",
+            "JAK阻害薬": "（ジャックそがいやく）炎症を引き起こすスイッチを細胞の中でブロックする、新しいタイプのお薬です。塗り薬（デルゴシチニブ）や飲み薬があります。",
+            "カポジ水痘様発疹症": "アトピーの湿疹がある場所にヘルペスウイルスが感染して、小さな水ぶくれが多発し、熱が出る病気です。早めに病院を受診する必要があります。"
+        };
+
+        const quizData = [
+            {
+                q: "成人（13歳以上）のアトピー性皮膚炎において、「慢性的」と判断される症状の持続期間はどれくらいですか？",
+                options: [
+                    { text: "1 ヶ月 以上", isCorrect: false, rationale: "1ヶ月では一時的な湿疹（かぶれ等）と区別がつきにくいため、アトピーの定義とは異なります。" },
+                    { text: "2 ヶ月 以上", isCorrect: false, rationale: "これは「乳児（1歳未満）」の場合の定義です。成人はもっと長い期間が必要です。" },
+                    { text: "6 ヶ月 以上", isCorrect: true, rationale: "正解です。成人の場合、湿疹が半年（6ヶ月）以上続いていることが診断の基準の一つになります。" },
+                    { text: "12 ヶ月 以上", isCorrect: false, rationale: "間違いです。6ヶ月の時点で慢性と判断されます。" }
+                ]
+            },
+            {
+                q: "「アトピー素因」とは、本人や家族がどのような病気を持っている体質のことを指しますか？",
+                options: [
+                    { text: "高血圧 や 糖尿病", isCorrect: false, rationale: "これらは生活習慣病であり、アレルギー体質を示す「アトピー素因」には含まれません。" },
+                    { text: "気管支喘息、アレルギー性鼻炎、アトピー性皮膚炎など", isCorrect: true, rationale: "正解です。これらアレルギーに関連する病気の既往や家族歴があることがアトピー素因と呼ばれます。" },
+                    { text: "胃潰瘍 や 肝炎", isCorrect: false, rationale: "間違いです。" },
+                    { text: "骨折 や 捻挫 のしやすさ", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "皮膚のバリア機能に深く関わり、不足すると皮膚が乾燥しやすくなるタンパク質の名前は何ですか？",
+                options: [
+                    { text: "コラーゲン", isCorrect: false, rationale: "コラーゲンは皮膚の奥（真皮）の弾力に関わるもので、角質のバリア機能の主役ではありません。" },
+                    { text: "フィラグリン", isCorrect: true, rationale: "正解です。フィラグリンが分解されてできるアミノ酸が、皮膚の潤いを保つバリアの役割を果たします。" },
+                    { text: "ヘモグロビン", isCorrect: false, rationale: "血液の中で酸素を運ぶ成分です。" },
+                    { text: "インスリン", isCorrect: false, rationale: "血糖値を下げるホルモンです。" }
+                ]
+            },
+            {
+                q: "血液検査で測定される「TARC（ターク）」という数値は、何を表していますか？",
+                options: [
+                    { text: "皮膚の 炎症の強さ（病勢）", isCorrect: true, rationale: "正解です。今の皮膚の炎症がどれくらい激しいかをリアルタイムに反映する、とても便利な数値です。" },
+                    { text: "将来 ハゲる かどうかの確率", isCorrect: false, rationale: "間違いです。円形脱毛症の指標ではありません。" },
+                    { text: "血液中の 糖分 の量", isCorrect: false, rationale: "それは血糖値です。" },
+                    { text: "ビタミン の不足具合", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "ステロイド外用薬は、効果の強さによっていくつのランクに分けられていますか？",
+                options: [
+                    { text: "2 段階", isCorrect: false, rationale: "間違いです。もっと細かく分かれています。" },
+                    { text: "3 段階", isCorrect: false, rationale: "間違いです。" },
+                    { text: "5 段階", isCorrect: true, rationale: "正解です。日本では「最強（ストロンゲスト）」から「弱い（ウィーク）」まで5つのランクに分けられています。" },
+                    { text: "10 段階", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "お薬を塗る量の目安「1 FTU（フィンガーチップユニット）」とは、どのくらいの分量ですか？",
+                options: [
+                    { text: "チューブ 1 本分", isCorrect: false, rationale: "多すぎます！" },
+                    { text: "人差し指の先端から、第一関節まで乗る量", isCorrect: true, rationale: "正解です。これが約0.5gに相当し、大人の手のひら2枚分の面積に塗る量として推奨されています。" },
+                    { text: "米粒 1 粒分", isCorrect: false, rationale: "少なすぎて、十分な治療効果が得られません。" },
+                    { text: "ティースプーン 1 杯分", isCorrect: false, rationale: "間違いです。指を使って測るのが一般的です。" }
+                ]
+            },
+            {
+                q: "ステロイド外用薬を塗った場所に「黒いシミ」が残ることがありますが、その原因は何ですか？",
+                options: [
+                    { text: "お薬の副作用で、皮膚が焦げたため", isCorrect: false, rationale: "ステロイドにお肌を焦がすような副作用はありません。" },
+                    { text: "もともとの 湿疹の炎症 が強かった跡（炎症後色素沈着）", isCorrect: true, rationale: "正解です。お薬のせいではなく、炎症がひどかったために残った跡です。炎症を早くお薬で抑えることが、シミを防ぐ近道です。" },
+                    { text: "日光（紫外線）とお薬が反応したため", isCorrect: false, rationale: "一部のお薬ではありますが、一般的なステロイドでは起こりません。" },
+                    { text: "お薬の成分が 皮膚に染み付いた ため", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "タクロリムス軟膏（プロトピック）の大きな特徴として、正しいものはどれですか？",
+                options: [
+                    { text: "塗った場所の 皮膚が薄くなる 副作用がない", isCorrect: true, rationale: "正解です。ステロイドで懸念される「皮膚の萎縮」が起きないため、顔や首にも安心して長く使えます。" },
+                    { text: "塗った瞬間に すべての痒みが消える", isCorrect: false, rationale: "残念ながら即効性はありません。数日塗ることで炎症を抑えていきます。" },
+                    { text: "食べても安全なほど無害である", isCorrect: false, rationale: "塗り薬ですので、口に入れてはいけません。" },
+                    { text: "水虫（白癬）の特効薬でもある", isCorrect: false, rationale: "真菌には効きません。むしろ免疫を抑えるので、水虫がある場所には慎重な判断が必要です。" }
+                ]
+            },
+            {
+                q: "見た目がきれいになった後も、週に数回など定期的にお薬を塗り続ける治療法を何と呼びますか？",
+                options: [
+                    { text: "リアクティブ 療法", isCorrect: false, rationale: "これは「悪くなった時だけ塗る」方法のことです。" },
+                    { text: "プロアクティブ 療法", isCorrect: true, rationale: "正解です。先回り（Proactive）して再燃を抑える、現代のスタンダードな管理法です。" },
+                    { text: "スポット 療法", isCorrect: false, rationale: "間違いです。" },
+                    { text: "デトックス 療法", isCorrect: false, rationale: "医学的なアトピー治療の用語ではありません。" }
+                ]
+            },
+            {
+                q: "保湿剤を塗るタイミングとして、最も効果が高い（推奨される）のはいつですか？",
+                options: [
+                    { text: "お風呂に入る 直前", isCorrect: false, rationale: "すぐ洗い流されてしまうため、意味がありません。" },
+                    { text: "入浴直後（理想は 5 分以内）", isCorrect: true, rationale: "正解です。お肌に水分が残っているうちに蓋をすることで、バリア機能を最も効率的に補うことができます。" },
+                    { text: "朝起きて すぐの、肌が一番乾いている時", isCorrect: false, rationale: "朝も大切ですが、入浴直後の効果には及びません。" },
+                    { text: "かゆみが 出てきた時 だけ", isCorrect: false, rationale: "保湿は予防が目的ですので、痒くなる前に毎日塗ることが大切です。" }
+                ]
+            },
+            {
+                q: "体を洗う際、アトピー性皮膚炎の患者さんにお勧めすべき正しい方法はどれですか？",
+                options: [
+                    { text: "ナイロンタオルで ゴシゴシと力強く 擦る", isCorrect: false, rationale: "バリア機能を破壊し、かゆみを悪化させる原因になるため厳禁です。" },
+                    { text: "石鹸をよく泡立てて、手で優しく 洗う", isCorrect: true, rationale: "正解です。摩擦を避け、泡の力で汚れ（細菌など）を洗い流すのが理想的です。" },
+                    { text: "石鹸は一切使わず、熱いお湯（42℃以上）で流す", isCorrect: false, rationale: "熱いお湯は皮脂を奪いすぎてしまい、逆効果です。38〜40℃が推奨されます。" },
+                    { text: "お風呂には 入らない ようにする", isCorrect: false, rationale: "不潔な状態は細菌が増え、湿疹を悪化させます。毎日の入浴が必要です。" }
+                ]
+            },
+            {
+                q: "「TARC（ターク）」の値は、炎症が良くなると通常どうなりますか？",
+                options: [
+                    { text: "上がる", isCorrect: false, rationale: "間違いです。炎症が激しいときに上がる数値です。" },
+                    { text: "下がる", isCorrect: true, rationale: "正解です。治療がうまくいってお肌がきれいになると、この数値も下がってきます。患者さんのモチベーション維持にも使われます。" },
+                    { text: "変わらない", isCorrect: false, rationale: "病勢に応じてダイナミックに変化します。" },
+                    { text: "100 固定である", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "アトピーの患部に小さな「凹んだ水ぶくれ」が多発し、熱が出た場合に疑われる合併症は？",
+                options: [
+                    { text: "カポジ水痘様発疹症", isCorrect: true, rationale: "正解です。ヘルペスウイルスが湿疹部位に感染して広がる重症な合併症です。ステロイドの外用を一旦止める判断が必要な場合もあります。" },
+                    { text: "ニキビ", isCorrect: false, rationale: "ニキビは毛穴の炎症であり、凹んだ水ぶくれが多発する経過とは異なります。" },
+                    { text: "ただの 日焼け", isCorrect: false, rationale: "間違いです。" },
+                    { text: "水虫", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "ステロイド外用薬を顔に長期間塗りすぎた場合、起こりうる副作用はどれですか？",
+                options: [
+                    { text: "顔が 真っ白 になる", isCorrect: false, rationale: "間違いです。" },
+                    { text: "皮膚が薄くなり、毛細血管が浮き出て赤く見える", isCorrect: true, rationale: "正解です。これを防ぐために、顔には適切なランクのお薬を使い、良くなったら別の薬（タクロリムス等）へ移行します。" },
+                    { text: "顔の毛が 全て抜ける", isCorrect: false, rationale: "むしろ副作用として「多毛（毛が濃くなる）」ことが報告されています。" },
+                    { text: "目が とても良くなる", isCorrect: false, rationale: "間違いです。むしろ眼圧上昇などのリスクに注意が必要です。" }
+                ]
+            },
+            {
+                q: "デュピルマブ（デュピクセント）など、注射で治療を行う最新の薬剤の分類は何ですか？",
+                options: [
+                    { text: "漢方薬", isCorrect: false, rationale: "間違いです。" },
+                    { text: "生物学的製剤（せいぶつがくてきせいざい）", isCorrect: true, rationale: "正解です。特定の炎症の原因物質をピンポイントで捕まえる、非常に効果の高い最新の治療薬です。" },
+                    { text: "殺菌消毒剤", isCorrect: false, rationale: "間違いです。" },
+                    { text: "栄養ドリンク剤", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "JAK阻害薬（塗り薬：コレクチムなど）を使用する際の注意点として、正しいものはどれですか？",
+                options: [
+                    { text: "ウイルスなどの 感染症 がある場所には塗らない", isCorrect: true, rationale: "正解です。免疫を抑える働きがあるため、ヘルペスやとびひなどがある場所には塗ってはいけません。" },
+                    { text: "毎日 10 回 以上塗らなければならない", isCorrect: false, rationale: "通常は1日2回です。" },
+                    { text: "冷蔵庫で凍らせて使う", isCorrect: false, rationale: "常温保存が一般的です。" },
+                    { text: "塗った後、3 時間は日光に当たってはいけない", isCorrect: false, rationale: "そこまで厳格な制限はありませんが、遮光は一般的に推奨されます。" }
+                ]
+            },
+            {
+                q: "肌着（衣類）の素材として、アトピー性皮膚炎の患者さんに最も適しているのはどれですか？",
+                options: [
+                    { text: "羊毛（ウール）", isCorrect: false, rationale: "ウールのチクチクした刺激は、かゆみを誘発する大きな原因になります。" },
+                    { text: "木綿（コットン）", isCorrect: true, rationale: "正解です。吸湿性が良く、刺激が少ないため、最も推奨される素材です。タグを外側にしたり、裏返して着る工夫も有効です。" },
+                    { text: "ナイロン や ポリエステル", isCorrect: false, rationale: "化学繊維は蒸れやすく、刺激を感じる患者さんも多いです。" },
+                    { text: "革（レザー）", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "アトピー性皮膚炎の患者さんが「汗をかいた」際のアドバイスとして適切なのは？",
+                options: [
+                    { text: "「汗をかくと悪化するので、一生運動しないでください」", isCorrect: false, rationale: "運動は健康に良く、汗をかくこと自体は悪くありません。その後のケアが重要です。" },
+                    { text: "「汗が乾く前に、濡れタオルで拭くか、シャワーで流してください」", isCorrect: true, rationale: "正解です。汗の成分が残ると刺激になるため、早めにきれいにすることが大切です。" },
+                    { text: "「汗は最高の保湿剤なので、そのまま放置してください」", isCorrect: false, rationale: "放置すると痒みや炎症の原因になります。" },
+                    { text: "「汗をかいた場所にだけ、ステロイドをたっぷり塗ってください」", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "アトピー性皮膚炎の治療のゴール（最終目標）は何ですか？",
+                options: [
+                    { text: "病院に来るのをやめること", isCorrect: false, rationale: "間違いです。安定していても管理は必要です。" },
+                    { text: "症状がない、あるいはあっても軽く、生活に支障がない状態を維持すること", isCorrect: true, rationale: "正解です。「完治」というより、病気をうまくコントロールして、普通の生活を送れるようにすることが目標です。" },
+                    { text: "全ての 食べ物 を食べられるようになること", isCorrect: false, rationale: "一部関係はありますが、皮膚の治療の主目的ではありません。" },
+                    { text: "血液検査の数値を 全てゼロ にすること", isCorrect: false, rationale: "間違いです。" }
+                ]
+            },
+            {
+                q: "最後に、クリニックのスタッフとして患者さんに接する上で最も大切なことは？",
+                options: [
+                    { text: "お薬の名前を 間違えずに 読み上げること", isCorrect: false, rationale: "大事ですが、機械的な対応だけでは不十分です。" },
+                    { text: "患者様の 不安や悩み を理解し、一緒に根気よく治療を続けるサポートをすること", isCorrect: true, rationale: "正解です。アトピーは長期戦です。正しい知識と共感を持って接することが、最高の看護に繋がります。" },
+                    { text: "とにかく 早く 診察室から追い出すこと", isCorrect: false, rationale: "間違いです！" },
+                    { text: "難しい 専門用語 を使って権威を見せること", isCorrect: false, rationale: "分かりやすく伝えることがスタッフの役割です。" }
+                ]
+            }
+        ];
+
+        const quiz = {
+            currentIdx: 0,
+            score: 0,
+            userAnswers: new Array(quizData.length).fill(null),
+            scoredQuestions: new Set(),
+            
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                this.render();
+            },
+            
+            render() {
+                const q = quizData[this.currentIdx];
+                document.getElementById('progress-text').innerText = `Question ${this.currentIdx + 1} / ${quizData.length}`;
+                document.getElementById('progress-bar').style.width = `${((this.currentIdx + 1) / quizData.length) * 100}%`;
+                
+                const prevBtn = document.getElementById('global-prev-btn');
+                if (this.currentIdx > 0) prevBtn.classList.remove('invisible');
+                else prevBtn.classList.add('invisible');
+                
+                document.getElementById('question-text').innerHTML = this.wrapGlossaryTerms(q.q);
+                
+                const optionsDiv = document.getElementById('options');
+                optionsDiv.innerHTML = '';
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all duration-200 font-medium text-sm sm:text-base shadow-sm leading-snug";
+                    btn.innerText = `${i + 1}. ${opt.text}`;
+                    btn.onclick = () => this.showRationale(i);
+                    optionsDiv.appendChild(btn);
+                });
+                
+                document.getElementById('explanation-box').classList.add('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+                
+                if (this.userAnswers[this.currentIdx] !== null) {
+                    this.showRationale(this.userAnswers[this.currentIdx], true);
+                }
+            },
+
+            wrapGlossaryTerms(text) {
+                let html = text;
+                const sortedTerms = Object.keys(glossary).sort((a, b) => b.length - a.length);
+                sortedTerms.forEach(term => {
+                    const regex = new RegExp(term, 'g');
+                    if (html.indexOf(term) !== -1 && !html.includes(`>${term}<`)) {
+                        html = html.split(term).join(`<span class="glossary-term" onclick="openGlossary('${term}')">${term}</span>`);
+                    }
+                });
+                return html;
+            },
+            
+            showRationale(idx, isReview = false) {
+                const q = quizData[this.currentIdx];
+                const opt = q.options[idx];
+                const expBox = document.getElementById('explanation-box');
+                const header = document.getElementById('feedback-header');
+                const icon = document.getElementById('status-icon');
+                const statusText = document.getElementById('status-text');
+                const rationaleElem = document.getElementById('rationale-text');
+                const nextBtn = document.getElementById('next-btn');
+                const buttons = document.querySelectorAll('#options button');
+
+                if (!isReview && !this.scoredQuestions.has(this.currentIdx)) {
+                    this.userAnswers[this.currentIdx] = idx;
+                    if (opt.isCorrect) this.score++;
+                    this.scoredQuestions.add(this.currentIdx);
+                } else if (!isReview) {
+                    this.userAnswers[this.currentIdx] = idx;
+                }
+
+                buttons.forEach((btn, i) => {
+                    btn.classList.remove('correct-btn', 'wrong-btn', 'ring-2', 'ring-indigo-500', 'neutral-btn');
+                    if (q.options[i].isCorrect) btn.classList.add('correct-btn');
+                    else btn.classList.add('neutral-btn');
+                });
+                
+                if (!opt.isCorrect) {
+                    buttons[idx].classList.remove('neutral-btn');
+                    buttons[idx].classList.add('wrong-btn');
+                    icon.innerText = "🔍 解説";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-red-600";
+                } else {
+                    icon.innerText = "✨ 正解のポイント";
+                    header.className = "flex items-center gap-2 mb-2 font-bold text-green-600";
+                }
+                
+                buttons[idx].classList.add('ring-2', 'ring-indigo-500');
+                rationaleElem.innerHTML = this.wrapGlossaryTerms(opt.rationale);
+                expBox.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                
+                if (!isReview) {
+                    setTimeout(() => {
+                        expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }
+            },
+            
+            next() {
+                this.currentIdx++;
+                if(this.currentIdx < quizData.length) {
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    this.showResult();
+                }
+            },
+
+            prev() {
+                if (this.currentIdx > 0) {
+                    this.currentIdx--;
+                    this.render();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            },
+            
+            showResult() {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('score-display').innerText = this.score;
+                
+                let msg = "";
+                if(this.score === 20) msg = "完璧です！今日からあなたも立派な皮膚科スタッフですね。素晴らしいです！";
+                else if(this.score >= 16) msg = "素晴らしい！基本的なことはほぼすべてマスターできています。自信を持って現場に立ちましょう。";
+                else if(this.score >= 12) msg = "合格点です。いくつか新しい概念（プロアクティブ療法など）を再確認しておけばバッチリです。";
+                else msg = "お疲れ様でした。まずは「お薬の適切な量」や「スキンケアの基本」から、もう一度見直してみましょう。";
+                
+                document.getElementById('result-message').innerText = msg;
+            }
+        };
+
+        function openGlossary(term) {
+            document.getElementById('glossary-title').innerText = term;
+            document.getElementById('glossary-body').innerText = glossary[term];
+            document.getElementById('glossary-modal').classList.remove('hidden');
+        }
+
+        function closeGlossary() {
+            document.getElementById('glossary-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+```
